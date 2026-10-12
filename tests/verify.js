@@ -56,6 +56,15 @@ async function runTests() {
     assert(publishedLabsCount >= 8, `All initial laboratories are marked PUBLISHED (${publishedLabsCount} published)`);
 
     // 6. Test Specific Simulations exist and have activities & quizzes
+    const sdIpasLab = await prisma.laboratory.findUnique({
+      where: { slug: 'lab-ipas-sd-tata-surya' },
+      include: { educationLevel: true, activities: true, quizzes: { include: { questions: true } } },
+    });
+    assert(sdIpasLab !== null, 'SD IPAS Solar System lab exists in database');
+    assert(sdIpasLab?.educationLevel.slug === 'sd-mi', 'SD IPAS lab is correctly tagged to SD/MI education level');
+    assert(sdIpasLab?.activities.length === 3, 'SD IPAS lab has 3 guided activities');
+    assert(sdIpasLab?.quizzes.length === 1 && sdIpasLab.quizzes[0].questions.length === 4, 'SD IPAS lab has kid-friendly quiz with 4 questions');
+
     const solarLab = await prisma.laboratory.findUnique({
       where: { slug: 'lab-virtual-tata-surya' },
       include: { activities: true, quizzes: { include: { questions: true } } },

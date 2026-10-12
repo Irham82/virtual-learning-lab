@@ -5,6 +5,7 @@ import { SolarSystem3D } from './solar-system-3d';
 import { RatioLab } from './ratio-lab';
 import { NetworkTopologyLab } from './network-topology-lab';
 import { SubnettingLab } from './subnetting-lab';
+import { SDSolarMultiverseLab } from './sd-solar-multiverse-lab';
 import { Maximize2, Minimize2, RotateCcw, Sparkles, Sliders, Play, CheckCircle2 } from 'lucide-react';
 
 interface LabSimulationEngineProps {
@@ -49,6 +50,9 @@ export function LabSimulationEngine({
     switch (slug) {
       case 'lab-virtual-tata-surya':
         return <SolarSystem3D onProgressUpdate={handleSimProgress} />;
+
+      case 'lab-ipas-sd-tata-surya':
+        return <SDSolarMultiverseLab onProgressUpdate={handleSimProgress} />;
 
       case 'lab-rasio-matematika':
         return <RatioLab onProgressUpdate={handleSimProgress} />;
