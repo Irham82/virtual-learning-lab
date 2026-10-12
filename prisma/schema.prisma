@@ -1,0 +1,216 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String             @id @default(cuid())
+  email        String             @unique
+  passwordHash String
+  name         String
+  role         String             @default("USER") // "ADMIN" | "USER"
+  avatar       String?
+  bio          String?
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  createdLabs  Laboratory[]       @relation("LabCreator")
+  favorites    Favorite[]
+  progresses   LearningProgress[]
+  quizAttempts QuizAttempt[]
+  auditLogs    AuditLog[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Category {
+  id           String       @id @default(cuid())
+  name         String       @unique
+  slug         String       @unique
+  description  String?
+  icon         String?      // Lucide icon identifier e.g. "Atom", "Calculator", "Globe", "Network"
+  color        String?      // e.g. "indigo", "teal", "amber", "blue", "emerald", "purple"
+  order        Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  laboratories Laboratory[]
+
+  @@index([slug])
+}
+
+model EducationLevel {
+  id           String       @id @default(cuid())
+  name         String       @unique
+  slug         String       @unique
+  description  String?
+  order        Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  laboratories Laboratory[]
+
+  @@index([slug])
+}
+
+model Laboratory {
+  id                 String             @id @default(cuid())
+  title              String
+  slug               String             @unique
+  shortDescription   String
+  fullDescription    String
+  subject            String             // e.g. "Matematika", "Fisika", "Informatika"
+  learningObjectives String             // JSON array string of objectives
+  prerequisites      String?            // Prasyarat materi
+  duration           Int                @default(30) // in minutes
+  difficulty         String             @default("BEGINNER") // "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
+  thumbnail          String?
+  simulationType     String             @default("WEB_INTERACTIVE") // "TWO_D" | "THREE_D" | "WEB_INTERACTIVE"
+  simulationConfig   String?            // JSON configuration specific to module
+  instructions       String             // Petunjuk penggunaan langkah demi langkah
+  status             String             @default("DRAFT") // "DRAFT" | "PUBLISHED" | "ARCHIVED"
+  featured           Boolean            @default(false)
+  viewCount          Int                @default(0)
+  publishedAt        DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  categoryId         String
+  category           Category           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  educationLevelId   String
+  educationLevel     EducationLevel     @relation(fields: [educationLevelId], references: [id], onDelete: Cascade)
+  createdById        String
+  createdBy          User               @relation("LabCreator", fields: [createdById], references: [id])
+
+  activities         LearningActivity[]
+  quizzes            Quiz[]
+  progresses         LearningProgress[]
+  favorites          Favorite[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([categoryId])
+  @@index([educationLevelId])
+  @@index([featured])
+}
+
+model LearningActivity {
+  id               String      @id @default(cuid())
+  laboratoryId     String
+  laboratory       Laboratory  @relation(fields: [laboratoryId], references: [id], onDelete: Cascade)
+  stepNumber       Int
+  title            String
+  description      String
+  taskType         String      @default("SIMULATION") // "SIMULATION" | "OBSERVATION" | "EXPERIMENT" | "ANALYSIS"
+  estimatedMinutes Int         @default(10)
+  createdAt        DateTime    @default(now())
+
+  @@index([laboratoryId])
+}
+
+model Quiz {
+  id           String         @id @default(cuid())
+  laboratoryId String
+  laboratory   Laboratory     @relation(fields: [laboratoryId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  passingScore Int            @default(70) // Percentage
+  createdAt    DateTime       @default(now())
+
+  questions    QuizQuestion[]
+  attempts     QuizAttempt[]
+
+  @@index([laboratoryId])
+}
+
+model QuizQuestion {
+  id                 String   @id @default(cuid())
+  quizId             String
+  quiz               Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  question           String
+  options            String   // JSON string array of options: ["Pilihan A", "Pilihan B", ...]
+  correctOptionIndex Int      // Index 0..N
+  explanation        String?
+  order              Int      @default(0)
+
+  @@index([quizId])
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score       Int      // 0 to 100
+  answers     String   // JSON string of { questionId: selectedIndex }
+  passed      Boolean
+  completedAt DateTime @default(now())
+
+  @@index([quizId])
+  @@index([userId])
+}
+
+model LearningProgress {
+  id                   String     @id @default(cuid())
+  userId               String
+  user                 User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  laboratoryId         String
+  laboratory           Laboratory @relation(fields: [laboratoryId], references: [id], onDelete: Cascade)
+  status               String     @default("IN_PROGRESS") // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+  completedActivityIds String     @default("[]") // JSON string array of finished activity IDs
+  timeSpentSeconds     Int        @default(0)
+  lastAccessedAt       DateTime   @default(now())
+  completedAt          DateTime?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  @@unique([userId, laboratoryId])
+  @@index([userId])
+  @@index([laboratoryId])
+}
+
+model Favorite {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  laboratoryId String
+  laboratory   Laboratory @relation(fields: [laboratoryId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, laboratoryId])
+  @@index([userId])
+  @@index([laboratoryId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // e.g. "CREATE_LAB", "UPDATE_LAB", "DELETE_LAB", "PUBLISH_LAB", "CHANGE_USER_STATUS"
+  entity    String   // e.g. "Laboratory", "User", "Category"
+  entityId  String?
+  details   String?  // JSON string
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model SiteSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+}
