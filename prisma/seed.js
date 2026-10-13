@@ -529,7 +529,7 @@ async function main() {
         canvasHeight: 500,
         allowPacketSimulation: true,
       }),
-      instructions: `1. Pilih perangkat (PC, Switch, Router, Server) dari palet alat di sebelah kiri.\n2. Klik pada area kerja kanvas untuk meletakkan perangkat.\n3. Gunakan mode "Koneksi" untuk menghubungkan dua perangkat dengan kabel link.\n4. Klik "Kirim Tes Ping" dari satu PC ke PC lain atau Server untuk memvisualisasikan paket data bergerak.`,
+      instructions: `1. Pilih perangkat pada toolbox: Komputer (PC), HUB/Switch, Server, atau Router, lalu klik di kanvas untuk menempatkannya.\n2. Klik dan geser (drag & drop) perangkat untuk menata posisi layout topologi.\n3. Pilih jenis kabel: Kabel Straight (untuk beda perangkat) atau Kabel Cross (untuk perangkat sejenis), lalu klik perangkat asal dan tujuan.\n4. Klik ikon gerigi untuk membuka dialog konfigurasi IP Address, Subnet Mask, dan Default Gateway.\n5. Buka tab "Uji Kirim Paket (Ping)" untuk memvalidasi alur komunikasi data ICMP mirip Cisco Packet Tracer!`,
       status: 'PUBLISHED',
       featured: true,
       viewCount: 275,
