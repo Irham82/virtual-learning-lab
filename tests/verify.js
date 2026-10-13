@@ -100,6 +100,7 @@ async function runTests() {
       include: { activities: true, quizzes: { include: { questions: true } } },
     });
     assert(subnetLab !== null, 'Subnetting IPv4 lab exists');
+    assert(subnetLab?.activities.length === 5, 'Subnetting IPv4 lab has 5 guided calculation activities');
 
     // 7. Test Progress and Audit Logs
     const progressCount = await prisma.learningProgress.count();
