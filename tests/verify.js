@@ -65,6 +65,16 @@ async function runTests() {
     assert(sdIpasLab?.activities.length === 5, 'SD IPAS lab has 5 guided experiment activities');
     assert(sdIpasLab?.quizzes.length === 1 && sdIpasLab.quizzes[0].questions.length === 4, 'SD IPAS lab has kid-friendly quiz with 4 questions');
 
+    const sdMathRatioLab = await prisma.laboratory.findUnique({
+      where: { slug: 'lab-matematika-sd-rasio' },
+      include: { category: true, educationLevel: true, activities: true, quizzes: { include: { questions: true } } },
+    });
+    assert(sdMathRatioLab !== null, 'SD Math Ratio lab exists in database');
+    assert(sdMathRatioLab?.category.slug === 'matematika', 'SD Math Ratio lab is in Matematika category');
+    assert(sdMathRatioLab?.educationLevel.slug === 'sd-mi', 'SD Math Ratio lab is correctly tagged to SD/MI education level');
+    assert(sdMathRatioLab?.activities.length === 5, 'SD Math Ratio lab has 5 guided experiment activities');
+    assert(sdMathRatioLab?.quizzes.length === 1 && sdMathRatioLab.quizzes[0].questions.length === 4, 'SD Math Ratio lab has kid-friendly quiz with 4 questions');
+
     const solarLab = await prisma.laboratory.findUnique({
       where: { slug: 'lab-virtual-tata-surya' },
       include: { activities: true, quizzes: { include: { questions: true } } },
