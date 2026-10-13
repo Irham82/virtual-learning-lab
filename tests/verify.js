@@ -62,7 +62,7 @@ async function runTests() {
     });
     assert(sdIpasLab !== null, 'SD IPAS Solar System lab exists in database');
     assert(sdIpasLab?.educationLevel.slug === 'sd-mi', 'SD IPAS lab is correctly tagged to SD/MI education level');
-    assert(sdIpasLab?.activities.length === 3, 'SD IPAS lab has 3 guided activities');
+    assert(sdIpasLab?.activities.length === 5, 'SD IPAS lab has 5 guided experiment activities');
     assert(sdIpasLab?.quizzes.length === 1 && sdIpasLab.quizzes[0].questions.length === 4, 'SD IPAS lab has kid-friendly quiz with 4 questions');
 
     const solarLab = await prisma.laboratory.findUnique({
