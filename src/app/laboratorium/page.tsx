@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { prisma } from '@/lib/prisma';
+import { getCatalogData } from '@/lib/data-service';
 import { LabCard } from '@/components/lab-card';
 import { Search, Filter, RotateCcw, Sparkles, BookOpen } from 'lucide-react';
 
@@ -25,59 +25,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const simulationType = searchParams.tipe || '';
   const sortBy = searchParams.sort || 'newest';
 
-  // Fetch filter options from database
-  const [categories, educationLevels] = await Promise.all([
-    prisma.category.findMany({ orderBy: { order: 'asc' } }),
-    prisma.educationLevel.findMany({ orderBy: { order: 'asc' } }),
-  ]);
-
-  // Build Prisma where clause
-  const where: any = {
-    status: 'PUBLISHED',
-  };
-
-  if (query) {
-    where.OR = [
-      { title: { contains: query } },
-      { shortDescription: { contains: query } },
-      { subject: { contains: query } },
-    ];
-  }
-
-  if (categorySlug) {
-    where.category = { slug: categorySlug };
-  }
-
-  if (levelSlug) {
-    where.educationLevel = { slug: levelSlug };
-  }
-
-  if (difficulty) {
-    where.difficulty = difficulty;
-  }
-
-  if (simulationType) {
-    where.simulationType = simulationType;
-  }
-
-  // Sorting
-  let orderBy: any = { publishedAt: 'desc' };
-  if (sortBy === 'title-asc') {
-    orderBy = { title: 'asc' };
-  } else if (sortBy === 'duration-asc') {
-    orderBy = { duration: 'asc' };
-  } else if (sortBy === 'popular') {
-    orderBy = { viewCount: 'desc' };
-  }
-
-  const labs = await prisma.laboratory.findMany({
-    where,
-    orderBy,
-    include: {
-      category: true,
-      educationLevel: true,
-    },
-  });
+  const { categories, educationLevels, labs } = await getCatalogData(searchParams);
 
   const hasActiveFilters = Boolean(
     query || categorySlug || levelSlug || difficulty || simulationType || (sortBy && sortBy !== 'newest')

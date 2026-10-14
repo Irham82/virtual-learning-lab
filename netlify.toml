@@ -6,3 +6,6 @@
   NPM_FLAGS = "--include=dev"
   SECRETS_SCAN_ENABLED = "false"
   SECRETS_SCAN_OMIT_KEYS = "DATABASE_URL,JWT_SECRET"
+
+[functions]
+  included_files = ["prisma/**"]

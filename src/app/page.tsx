@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { prisma } from '@/lib/prisma';
+import { getHomeData } from '@/lib/data-service';
 import { LabCard } from '@/components/lab-card';
 import { CategoryIcon } from '@/components/category-icon';
 import {
@@ -22,49 +22,15 @@ import {
 export const revalidate = 0; // Dynamic data
 
 export default async function HomePage() {
-  // 1. Fetch real statistics from database (NO FAKE STATS!)
-  const [totalPublishedLabs, totalCategories, totalUsers, totalActivities] = await Promise.all([
-    prisma.laboratory.count({ where: { status: 'PUBLISHED' } }),
-    prisma.category.count(),
-    prisma.user.count({ where: { isActive: true } }),
-    prisma.learningActivity.count(),
-  ]);
-
-  // 2. Fetch categories with their lab counts
-  const categories = await prisma.category.findMany({
-    orderBy: { order: 'asc' },
-    include: {
-      _count: {
-        select: {
-          laboratories: {
-            where: { status: 'PUBLISHED' },
-          },
-        },
-      },
-    },
-  });
-
-  // 3. Fetch Featured Labs
-  const featuredLabs = await prisma.laboratory.findMany({
-    where: { status: 'PUBLISHED', featured: true },
-    take: 4,
-    orderBy: { updatedAt: 'desc' },
-    include: {
-      category: true,
-      educationLevel: true,
-    },
-  });
-
-  // 4. Fetch Latest Labs
-  const latestLabs = await prisma.laboratory.findMany({
-    where: { status: 'PUBLISHED' },
-    take: 6,
-    orderBy: { publishedAt: 'desc' },
-    include: {
-      category: true,
-      educationLevel: true,
-    },
-  });
+  const {
+    totalPublishedLabs,
+    totalCategories,
+    totalUsers,
+    totalActivities,
+    categories,
+    featuredLabs,
+    latestLabs,
+  } = await getHomeData();
 
   return (
     <div className="space-y-16 lg:space-y-24 pb-20">

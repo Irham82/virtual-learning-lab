@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { getLabDetail, incrementLabView } from '@/lib/data-service';
 import { getCurrentUser } from '@/lib/auth';
 import { startOrUpdateLabProgress } from '@/app/actions/learning';
 import { LabSimulationEngine } from '@/components/simulations/lab-simulation-engine';
@@ -35,33 +36,14 @@ export const revalidate = 0;
 export default async function LabDetailPage({ params }: LabDetailPageProps) {
   const user = await getCurrentUser();
 
-  const lab = await prisma.laboratory.findUnique({
-    where: { slug: params.slug },
-    include: {
-      category: true,
-      educationLevel: true,
-      activities: {
-        orderBy: { stepNumber: 'asc' },
-      },
-      quizzes: {
-        include: {
-          questions: {
-            orderBy: { order: 'asc' },
-          },
-        },
-      },
-    },
-  });
+  const lab = await getLabDetail(params.slug);
 
   if (!lab || lab.status !== 'PUBLISHED') {
     notFound();
   }
 
-  // Increment viewCount
-  await prisma.laboratory.update({
-    where: { id: lab.id },
-    data: { viewCount: { increment: 1 } },
-  });
+  // Increment viewCount non-blockingly
+  incrementLabView(lab.id);
 
   // If user is logged in, record or fetch progress & favorite
   let userProgress = null;
@@ -69,26 +51,30 @@ export default async function LabDetailPage({ params }: LabDetailPageProps) {
   let quizAttempt = null;
 
   if (user) {
-    userProgress = await startOrUpdateLabProgress(lab.id);
+    try {
+      userProgress = await startOrUpdateLabProgress(lab.id);
 
-    const fav = await prisma.favorite.findUnique({
-      where: {
-        userId_laboratoryId: {
-          userId: user.id,
-          laboratoryId: lab.id,
-        },
-      },
-    });
-    isFavorited = Boolean(fav);
-
-    if (lab.quizzes.length > 0) {
-      quizAttempt = await prisma.quizAttempt.findFirst({
+      const fav = await prisma.favorite.findUnique({
         where: {
-          userId: user.id,
-          quizId: lab.quizzes[0].id,
+          userId_laboratoryId: {
+            userId: user.id,
+            laboratoryId: lab.id,
+          },
         },
-        orderBy: { completedAt: 'desc' },
       });
+      isFavorited = Boolean(fav);
+
+      if (lab.quizzes && lab.quizzes.length > 0) {
+        quizAttempt = await prisma.quizAttempt.findFirst({
+          where: {
+            userId: user.id,
+            quizId: lab.quizzes[0].id,
+          },
+          orderBy: { completedAt: 'desc' },
+        });
+      }
+    } catch (err) {
+      console.warn('[LabDetail] User progress fetch error (using fallback):', err);
     }
   }
 

@@ -5,39 +5,44 @@ import { requireUser, getCurrentUser } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export async function startOrUpdateLabProgress(labId: string) {
-  const user = await getCurrentUser();
-  if (!user) return null;
+  try {
+    const user = await getCurrentUser();
+    if (!user) return null;
 
-  const existing = await prisma.learningProgress.findUnique({
-    where: {
-      userId_laboratoryId: {
-        userId: user.id,
-        laboratoryId: labId,
-      },
-    },
-  });
-
-  if (!existing) {
-    const created = await prisma.learningProgress.create({
-      data: {
-        userId: user.id,
-        laboratoryId: labId,
-        status: 'IN_PROGRESS',
-        completedActivityIds: '[]',
-        timeSpentSeconds: 60,
-        lastAccessedAt: new Date(),
+    const existing = await prisma.learningProgress.findUnique({
+      where: {
+        userId_laboratoryId: {
+          userId: user.id,
+          laboratoryId: labId,
+        },
       },
     });
-    return created;
-  } else {
-    const updated = await prisma.learningProgress.update({
-      where: { id: existing.id },
-      data: {
-        lastAccessedAt: new Date(),
-        timeSpentSeconds: { increment: 60 },
-      },
-    });
-    return updated;
+
+    if (!existing) {
+      const created = await prisma.learningProgress.create({
+        data: {
+          userId: user.id,
+          laboratoryId: labId,
+          status: 'IN_PROGRESS',
+          completedActivityIds: '[]',
+          timeSpentSeconds: 60,
+          lastAccessedAt: new Date(),
+        },
+      });
+      return created;
+    } else {
+      const updated = await prisma.learningProgress.update({
+        where: { id: existing.id },
+        data: {
+          lastAccessedAt: new Date(),
+          timeSpentSeconds: { increment: 60 },
+        },
+      });
+      return updated;
+    }
+  } catch (err) {
+    console.warn('[LearningAction] startOrUpdateLabProgress error:', err);
+    return null;
   }
 }
 
