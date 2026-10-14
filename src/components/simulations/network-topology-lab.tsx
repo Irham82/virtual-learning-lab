@@ -25,6 +25,12 @@ import {
   Check,
   MousePointer,
   HelpCircle,
+  Mail,
+  Eye,
+  FileText,
+  ArrowRight,
+  ShieldCheck,
+  Clock,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -91,6 +97,13 @@ export function NetworkTopologyLab({ onProgressUpdate }: { onProgressUpdate?: ()
   const [pingDestId, setPingDestId] = useState<string>('srv1');
   const [isSimulatingPing, setIsSimulatingPing] = useState<boolean>(false);
   const [packetProgress, setPacketProgress] = useState<number>(0);
+  const [packetStage, setPacketStage] = useState<'idle' | 'creating' | 'outbound' | 'processing' | 'inbound' | 'delivered' | 'failed'>('idle');
+  const [packetPos, setPacketPos] = useState<{ x: number; y: number; isReturn: boolean; currentHopName: string } | null>(null);
+  const [activePathNodeIds, setActivePathNodeIds] = useState<string[]>([]);
+  const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
+  const [currentStepText, setCurrentStepText] = useState<string>('');
+  const [isPduModalOpen, setIsPduModalOpen] = useState<boolean>(false);
+  const [simSpeed, setSimSpeed] = useState<'normal' | 'slow'>('normal');
   const [terminalLogs, setTerminalLogs] = useState<string[]>([
     'Cisco Packet Tracer Virtual Engine Siap. Rancang topologi atau kirim paket ICMP Ping.',
   ]);
@@ -253,8 +266,45 @@ export function NetworkTopologyLab({ onProgressUpdate }: { onProgressUpdate?: ()
   };
 
   // =========================================================================
-  // SIMULASI ICMP PING / PDU TESTING
+  // SIMULASI ICMP PING / PDU TESTING (SURAT DIGITAL CISCO PACKET TRACER)
   // =========================================================================
+  const findPathNodes = (
+    startId: string,
+    targetId: string,
+    currentNodes: DeviceNode[],
+    currentLinks: CableLink[]
+  ): DeviceNode[] | null => {
+    const queue: string[][] = [[startId]];
+    const visited = new Set<string>([startId]);
+
+    while (queue.length > 0) {
+      const path = queue.shift()!;
+      const lastNodeId = path[path.length - 1];
+
+      if (lastNodeId === targetId) {
+        return path
+          .map((id) => currentNodes.find((n) => n.id === id))
+          .filter((n): n is DeviceNode => Boolean(n));
+      }
+
+      const neighbors: string[] = [];
+      currentLinks.forEach((link) => {
+        if (link.from === lastNodeId) neighbors.push(link.to);
+        if (link.to === lastNodeId) neighbors.push(link.from);
+      });
+
+      for (const nId of neighbors) {
+        const nodeObj = currentNodes.find((n) => n.id === nId);
+        if (nodeObj && nodeObj.isOnline && !visited.has(nId)) {
+          visited.add(nId);
+          queue.push([...path, nId]);
+        }
+      }
+    }
+
+    return null;
+  };
+
   const handleRunPingTest = () => {
     if (isSimulatingPing) return;
 
@@ -265,116 +315,153 @@ export function NetworkTopologyLab({ onProgressUpdate }: { onProgressUpdate?: ()
 
     setIsSimulatingPing(true);
     setPacketProgress(0);
+    setPacketStage('creating');
+    setCurrentStepIndex(1);
+    setCurrentStepText(`[Tahap 1: Enkapsulasi Surat] ${src.name} mengemas surat ICMP Echo Request (Type 8, Code 0, Data 32 Bytes).`);
+    setPacketPos({ x: src.x, y: src.y, isReturn: false, currentHopName: src.name });
 
     setTerminalLogs([
-      `Cisco Packet Tracer ICMP Ping Simulation Engine`,
-      `PING ${dst.ip} (${dst.name}) dari ${src.ip} (${src.name}) dengan 32 bytes data...`,
+      `Cisco Packet Tracer ICMP Simulation Engine`,
+      `Membuat Surat Digital: Pengirim ${src.name} (${src.ip}) ➔ Tujuan ${dst.name} (${dst.ip}) [32 bytes]`,
     ]);
 
+    // Validation checks
+    if (!src.isOnline) {
+      setPacketStage('failed');
+      setCurrentStepIndex(1);
+      setCurrentStepText(`❌ GAGAL: Perangkat pengirim (${src.name}) dalam status POWER OFF / MATI!`);
+      setTerminalLogs((prev) => [
+        ...prev,
+        `❌ GAGAL: Perangkat pengirim (${src.name}) dalam status POWER OFF / MATI!`,
+        `Status: Transmit failed. (100% loss)`,
+      ]);
+      setIsSimulatingPing(false);
+      return;
+    }
+
+    if (!dst.isOnline) {
+      setPacketStage('failed');
+      setCurrentStepIndex(1);
+      setCurrentStepText(`❌ Request timed out (RTO). Perangkat tujuan (${dst.name}) offline / tidak menyala.`);
+      setTerminalLogs((prev) => [
+        ...prev,
+        `❌ Request timed out (RTO). Perangkat tujuan (${dst.name}) offline / tidak menyala.`,
+        `Status: Destination unreachable. (100% loss)`,
+      ]);
+      setIsSimulatingPing(false);
+      return;
+    }
+
+    const pathNodes = findPathNodes(src.id, dst.id, nodes, links);
+
+    if (!pathNodes || pathNodes.length < 2) {
+      setPacketStage('failed');
+      setCurrentStepIndex(2);
+      setCurrentStepText(`❌ Surat Gagal Terkirim: Tidak ada kabel yang menghubungkan ${src.name} ke ${dst.name}!`);
+      setTerminalLogs((prev) => [
+        ...prev,
+        `❌ Destination Host Unreachable. Tidak ada kabel yang menghubungkan ${src.name} ke ${dst.name}.`,
+        `Petunjuk: Sambungkan perangkat menggunakan Switch/Hub atau Kabel Crossover!`,
+      ]);
+      setIsSimulatingPing(false);
+      return;
+    }
+
+    // Subnet checking
+    const srcSubnet = src.ip.split('.').slice(0, 3).join('.');
+    const dstSubnet = dst.ip.split('.').slice(0, 3).join('.');
+
+    if (srcSubnet !== dstSubnet) {
+      const hasOnlineRouter = pathNodes.some((n) => n.type === 'router' && n.isOnline);
+      if (!hasOnlineRouter) {
+        setPacketStage('failed');
+        setCurrentStepIndex(2);
+        setCurrentStepText(`❌ Beda Subnet (${srcSubnet}.x vs ${dstSubnet}.x). Membutuhkan Router Gateway untuk meneruskan surat antar-jaringan!`);
+        setTerminalLogs((prev) => [
+          ...prev,
+          `❌ Beda Subnet (${srcSubnet}.x vs ${dstSubnet}.x). Membutuhkan Router Gateway untuk routing antar-jaringan!`,
+        ]);
+        setIsSimulatingPing(false);
+        return;
+      }
+    }
+
+    setActivePathNodeIds(pathNodes.map((n) => n.id));
+
+    const stepInterval = simSpeed === 'slow' ? 50 : 32;
     let progress = 0;
+    const segmentsCount = pathNodes.length - 1;
+    const reversePathNodes = [...pathNodes].reverse();
+
     const timer = setInterval(() => {
-      progress += 10;
+      progress += 1;
       setPacketProgress(progress);
+
+      if (progress <= 12) {
+        // Stage 1: Creating envelope at source
+        setPacketStage('creating');
+        setCurrentStepIndex(1);
+        setCurrentStepText(`[Tahap 1: Enkapsulasi] ${src.name} mengemas surat ICMP Echo Request (Type 8, Code 0, Data 32 Bytes).`);
+        setPacketPos({ x: src.x, y: src.y, isReturn: false, currentHopName: src.name });
+      } else if (progress > 12 && progress <= 50) {
+        // Stage 2: Outbound traveling from source to destination
+        setPacketStage('outbound');
+        setCurrentStepIndex(2);
+        const tOut = (progress - 12) / 38;
+        const segIdx = Math.min(Math.floor(tOut * segmentsCount), segmentsCount - 1);
+        const localT = (tOut * segmentsCount) - segIdx;
+        const fromN = pathNodes[segIdx];
+        const toN = pathNodes[segIdx + 1];
+        const curX = fromN.x + localT * (toN.x - fromN.x);
+        const curY = fromN.y + localT * (toN.y - fromN.y);
+        setCurrentStepText(`[Tahap 2: Surat Meluncur di Kabel] Surat ICMP Request meluncur dari ${fromN.name} ➔ ${toN.name}.`);
+        setPacketPos({ x: curX, y: curY, isReturn: false, currentHopName: toN.name });
+      } else if (progress > 50 && progress <= 62) {
+        // Stage 3: Destination receiving and opening letter
+        setPacketStage('processing');
+        setCurrentStepIndex(3);
+        setCurrentStepText(`[Tahap 3: Surat Diterima] ${dst.name} membuka amplop ICMP Echo Request & membuat surat balasan (Echo Reply Type 0).`);
+        setPacketPos({ x: dst.x, y: dst.y, isReturn: false, currentHopName: dst.name });
+      } else if (progress > 62 && progress <= 95) {
+        // Stage 4: Inbound traveling from destination back to source
+        setPacketStage('inbound');
+        setCurrentStepIndex(4);
+        const tIn = (progress - 62) / 33;
+        const segIdx = Math.min(Math.floor(tIn * segmentsCount), segmentsCount - 1);
+        const localT = (tIn * segmentsCount) - segIdx;
+        const fromN = reversePathNodes[segIdx];
+        const toN = reversePathNodes[segIdx + 1];
+        const curX = fromN.x + localT * (toN.x - fromN.x);
+        const curY = fromN.y + localT * (toN.y - fromN.y);
+        setCurrentStepText(`[Tahap 4: Surat Balasan Meluncur] Surat ICMP Reply meluncur balik dari ${fromN.name} ➔ ${toN.name}.`);
+        setPacketPos({ x: curX, y: curY, isReturn: true, currentHopName: toN.name });
+      } else if (progress > 95) {
+        // Stage 5: Delivered back at source
+        setPacketStage('delivered');
+        setCurrentStepIndex(5);
+        setCurrentStepText(`[Tahap 5: Surat Tiba di Pengirim] ${src.name} menerima surat balasan Echo Reply! Transmisi paket 100% SUKSES.`);
+        setPacketPos({ x: src.x, y: src.y, isReturn: true, currentHopName: src.name });
+      }
 
       if (progress >= 100) {
         clearInterval(timer);
         setIsSimulatingPing(false);
-
-        // Verification checks
-        if (!src.isOnline) {
-          setTerminalLogs((prev) => [
-            ...prev,
-            `❌ GAGAL: Perangkat pengirim (${src.name}) dalam status POWER OFF / MATI!`,
-            `Status: Transmit failed. (100% loss)`,
-          ]);
-          return;
-        }
-
-        if (!dst.isOnline) {
-          setTerminalLogs((prev) => [
-            ...prev,
-            `❌ Request timed out (RTO). Perangkat tujuan (${dst.name}) offline / tidak menyala.`,
-            `Status: Destination unreachable. (100% loss)`,
-          ]);
-          return;
-        }
-
-        // Check if there is an active path via cables
-        // Simple BFS pathfinder on links
-        const isConnected = checkPathExists(src.id, dst.id, nodes, links);
-
-        if (!isConnected) {
-          setTerminalLogs((prev) => [
-            ...prev,
-            `❌ Destination Host Unreachable. Tidak ada kabel yang menghubungkan ${src.name} ke ${dst.name}.`,
-            `Petunjuk: Sambungkan perangkat menggunakan Switch/Hub atau Kabel Crossover!`,
-          ]);
-          return;
-        }
-
-        // Check subnet compatibility
-        const srcSubnet = src.ip.split('.').slice(0, 3).join('.');
-        const dstSubnet = dst.ip.split('.').slice(0, 3).join('.');
-
-        if (srcSubnet !== dstSubnet) {
-          // Different subnet requires a router online in the network
-          const hasOnlineRouter = nodes.some((n) => n.type === 'router' && n.isOnline);
-          if (!hasOnlineRouter) {
-            setTerminalLogs((prev) => [
-              ...prev,
-              `❌ Beda Subnet (${srcSubnet}.x vs ${dstSubnet}.x). Membutuhkan Router Gateway untuk routing antar-jaringan!`,
-            ]);
-            return;
-          }
-        }
-
-        // Success!
-        confetti({ particleCount: 70, spread: 60 });
+        confetti({ particleCount: 75, spread: 65 });
         setTerminalLogs((prev) => [
           ...prev,
-          `✅ Balasan ICMP dari ${dst.ip}: bytes=32 waktu=1.2ms TTL=128`,
-          `✅ Balasan ICMP dari ${dst.ip}: bytes=32 waktu=1.0ms TTL=128`,
-          `✅ Status: SUCCESSFUL! Paket ICMP berhasil terkirim bolak-balik tanpa packet loss.`,
+          `✅ [Tahap 1] Surat ICMP Request dibuat oleh ${src.name} (${src.ip}).`,
+          `✅ [Tahap 2] Jalur perjalanan surat: ${pathNodes.map((n) => n.name).join(' ➔ ')}.`,
+          `✅ [Tahap 3] Surat diterima ${dst.name} (${dst.ip}), balasan disiapkan.`,
+          `✅ [Tahap 4] Surat balasan Echo Reply meluncur kembali ke ${src.name}.`,
+          `✅ [Tahap 5] Balasan ICMP dari ${dst.ip}: bytes=32 waktu=1.2ms TTL=128`,
+          `✅ Status: SUCCESSFUL! Surat ICMP berhasil bolak-balik tanpa packet loss.`,
         ]);
 
         if (onProgressUpdate) {
           onProgressUpdate();
         }
       }
-    }, 120);
-  };
-
-  // Helper BFS graph traversal
-  const checkPathExists = (
-    startId: string,
-    targetId: string,
-    currentNodes: DeviceNode[],
-    currentLinks: CableLink[]
-  ): boolean => {
-    const queue = [startId];
-    const visited = new Set<string>([startId]);
-
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      if (current === targetId) return true;
-
-      // Find all neighbors connected via links where intermediary node is online
-      const neighbors: string[] = [];
-      currentLinks.forEach((link) => {
-        if (link.from === current) neighbors.push(link.to);
-        if (link.to === current) neighbors.push(link.from);
-      });
-
-      for (const nId of neighbors) {
-        const nodeObj = currentNodes.find((n) => n.id === nId);
-        if (nodeObj && nodeObj.isOnline && !visited.has(nId)) {
-          visited.add(nId);
-          queue.push(nId);
-        }
-      }
-    }
-
-    return false;
+    }, stepInterval);
   };
 
   // Topology template loader
@@ -772,15 +859,40 @@ export function NetworkTopologyLab({ onProgressUpdate }: { onProgressUpdate?: ()
 
                 const isStraight = link.cableType === 'straight';
                 const isLinkActive = nFrom.isOnline && nTo.isOnline;
+                const isCableInActivePath =
+                  activePathNodeIds.includes(link.from) && activePathNodeIds.includes(link.to);
 
                 return (
                   <g key={link.id}>
+                    {/* Glowing active cable effect when letter is traveling */}
+                    {isSimulatingPing && isCableInActivePath && (
+                      <line
+                        x1={nFrom.x}
+                        y1={nFrom.y}
+                        x2={nTo.x}
+                        y2={nTo.y}
+                        stroke={packetPos?.isReturn ? '#38bdf8' : '#fbbf24'}
+                        strokeWidth="8"
+                        opacity="0.55"
+                        className="animate-pulse"
+                      />
+                    )}
                     <line
                       x1={nFrom.x}
                       y1={nFrom.y}
                       x2={nTo.x}
                       y2={nTo.y}
-                      stroke={isLinkActive ? (isStraight ? '#38bdf8' : '#f59e0b') : '#475569'}
+                      stroke={
+                        isSimulatingPing && isCableInActivePath
+                          ? packetPos?.isReturn
+                            ? '#38bdf8'
+                            : '#fbbf24'
+                          : isLinkActive
+                          ? isStraight
+                            ? '#38bdf8'
+                            : '#f59e0b'
+                          : '#475569'
+                      }
                       strokeWidth={isStraight ? '3' : '2.5'}
                       strokeDasharray={isStraight ? 'none' : '6,4'}
                       className="transition-all duration-75"
@@ -801,15 +913,94 @@ export function NetworkTopologyLab({ onProgressUpdate }: { onProgressUpdate?: ()
                 );
               })}
 
-              {/* Animated ping packet dot if simulating */}
-              {isSimulatingPing && (
-                <circle
-                  cx={380}
-                  cy={190}
-                  r="7"
-                  fill="#fbbf24"
-                  className="animate-ping"
-                />
+              {/* Animated Envelope / Surat ICMP Packet */}
+              {isSimulatingPing && packetPos && (
+                <g
+                  transform={`translate(${packetPos.x}, ${packetPos.y})`}
+                  className="z-30 pointer-events-none transition-transform duration-75"
+                >
+                  {/* Pulsing Ripple Effect */}
+                  <circle
+                    r="24"
+                    fill={packetStage === 'failed' ? '#ef4444' : packetPos.isReturn ? '#38bdf8' : '#f59e0b'}
+                    opacity="0.3"
+                    className="animate-ping"
+                  />
+                  <circle
+                    r="16"
+                    fill={packetStage === 'failed' ? '#ef4444' : packetPos.isReturn ? '#0284c7' : '#d97706'}
+                    opacity="0.25"
+                  />
+
+                  {/* Envelope drop shadow */}
+                  <rect x="-19" y="-13" width="38" height="26" rx="4" fill="#000000" opacity="0.6" />
+
+                  {/* Envelope Body */}
+                  <rect
+                    x="-17"
+                    y="-12"
+                    width="34"
+                    height="24"
+                    rx="3"
+                    fill={packetStage === 'failed' ? '#991b1b' : packetPos.isReturn ? '#0284c7' : '#d97706'}
+                    stroke={packetStage === 'failed' ? '#f87171' : packetPos.isReturn ? '#bae6fd' : '#fef08a'}
+                    strokeWidth="2"
+                  />
+
+                  {/* Envelope Flap Fold Lines */}
+                  <path
+                    d="M -17 -12 L 0 2 L 17 -12"
+                    fill="none"
+                    stroke={packetStage === 'failed' ? '#f87171' : packetPos.isReturn ? '#bae6fd' : '#fef08a'}
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M -17 12 L -6 0 M 17 12 L 6 0"
+                    fill="none"
+                    stroke={packetStage === 'failed' ? '#fca5a5' : packetPos.isReturn ? '#7dd3fc' : '#fde047'}
+                    strokeWidth="1.2"
+                    opacity="0.75"
+                  />
+
+                  {/* Stamp / Seal in Center */}
+                  <circle
+                    cx="0"
+                    cy="2"
+                    r="3.5"
+                    fill={packetStage === 'failed' ? '#ef4444' : '#ffffff'}
+                  />
+
+                  {/* Floating Badge above Envelope */}
+                  <g transform="translate(0, -26)">
+                    <rect
+                      x="-70"
+                      y="-11"
+                      width="140"
+                      height="20"
+                      rx="10"
+                      fill="#0f172a"
+                      stroke={packetStage === 'failed' ? '#ef4444' : packetPos.isReturn ? '#38bdf8' : '#f59e0b'}
+                      strokeWidth="1.5"
+                      className="filter drop-shadow-md"
+                    />
+                    <text
+                      x="0"
+                      y="3.5"
+                      fill="#ffffff"
+                      fontSize="9.5"
+                      fontWeight="bold"
+                      fontFamily="monospace"
+                      textAnchor="middle"
+                    >
+                      {packetStage === 'failed'
+                        ? '❌ PAKET DROPPED'
+                        : packetPos.isReturn
+                        ? '✉️ ICMP Echo Reply'
+                        : '✉️ ICMP Echo Request'}
+                    </text>
+                  </g>
+                </g>
               )}
             </svg>
 
@@ -936,17 +1127,52 @@ export function NetworkTopologyLab({ onProgressUpdate }: { onProgressUpdate?: ()
                 </select>
               </div>
 
+              {/* Simulation Speed Controls */}
+              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 pb-0.5">
+                <span>Kecepatan Surat:</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setSimSpeed('normal')}
+                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
+                      simSpeed === 'normal'
+                        ? 'bg-tealbrand-600 text-white shadow-sm'
+                        : 'bg-slate-950 text-slate-400 border border-slate-800 hover:bg-slate-800'
+                    }`}
+                  >
+                    1x (Normal)
+                  </button>
+                  <button
+                    onClick={() => setSimSpeed('slow')}
+                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
+                      simSpeed === 'slow'
+                        ? 'bg-amber-600 text-white shadow-sm'
+                        : 'bg-slate-950 text-slate-400 border border-slate-800 hover:bg-slate-800'
+                    }`}
+                  >
+                    0.5x (Lambat)
+                  </button>
+                </div>
+              </div>
+
               <button
                 onClick={handleRunPingTest}
                 disabled={isSimulatingPing || nodes.length < 2}
                 className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md ${
                   isSimulatingPing
-                    ? 'bg-amber-600 text-white cursor-wait'
-                    : 'bg-tealbrand-600 hover:bg-tealbrand-500 text-white shadow-tealbrand-500/20 active:scale-95'
+                    ? 'bg-amber-600 text-white cursor-wait animate-pulse'
+                    : 'bg-gradient-to-r from-tealbrand-600 to-tealbrand-500 hover:from-tealbrand-500 hover:to-tealbrand-400 text-white shadow-tealbrand-500/20 active:scale-95'
                 }`}
               >
-                <Send className="w-3.5 h-3.5" />
-                <span>{isSimulatingPing ? 'Mengirimkan Paket...' : 'Kirim Paket ICMP Ping'}</span>
+                <Mail className="w-3.5 h-3.5" />
+                <span>{isSimulatingPing ? 'Surat Sedang Meluncur...' : 'Kirim Paket ICMP Ping (✉️ Surat)'}</span>
+              </button>
+
+              <button
+                onClick={() => setIsPduModalOpen(true)}
+                className="w-full py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-tealbrand-300 border border-slate-800 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
+              >
+                <Eye className="w-3.5 h-3.5 text-tealbrand-400" />
+                <span>Intip Isi Surat (PDU Inspector)</span>
               </button>
             </div>
           </div>
@@ -975,6 +1201,170 @@ export function NetworkTopologyLab({ onProgressUpdate }: { onProgressUpdate?: ()
               <span>Port Auto-MDIX: Enabled</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ============================================================== */}
+      {/* 3b. PELACAK PERJALANAN SURAT ICMP (PDU PACKET TRACKER)         */}
+      {/* ============================================================== */}
+      <div className="bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+              <Mail className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-slate-100 flex items-center gap-2">
+                <span>📬 Alur Perjalanan Surat ICMP (Proses Pengiriman PDU)</span>
+                {isSimulatingPing && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse font-mono font-bold">
+                    ✉️ Surat Sedang Bergerak...
+                  </span>
+                )}
+                {packetStage === 'delivered' && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-mono font-bold">
+                    ✅ Surat Sukses Diterima
+                  </span>
+                )}
+              </h4>
+              <p className="text-xs text-slate-400">
+                Memvisualisasikan proses pengiriman paket data digital (PDU) dari perangkat sumber ke perangkat tujuan seperti di Cisco Packet Tracer.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsPduModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-tealbrand-950 hover:bg-tealbrand-900 text-tealbrand-300 text-xs font-bold flex items-center gap-1.5 transition-all border border-tealbrand-500/40 shadow-sm"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Intip Amplop Surat (PDU)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Current Stage Status Banner */}
+        {currentStepText ? (
+          <div
+            className={`p-3 rounded-xl border text-xs font-semibold flex items-center gap-2.5 transition-all ${
+              packetStage === 'failed'
+                ? 'bg-rose-950/60 border-rose-600/60 text-rose-200'
+                : packetStage === 'delivered'
+                ? 'bg-emerald-950/60 border-emerald-600/60 text-emerald-200 shadow-md shadow-emerald-500/10'
+                : 'bg-amber-950/40 border-amber-500/50 text-amber-200 shadow-md shadow-amber-500/10'
+            }`}
+          >
+            <span className="text-lg">
+              {packetStage === 'failed' ? '❌' : packetStage === 'delivered' ? '🎉' : '✉️'}
+            </span>
+            <div className="flex-1">
+              <p className="font-bold">{currentStepText}</p>
+              {packetPos && (
+                <p className="text-[11px] opacity-80 mt-0.5">
+                  Posisi saat ini: Melalui kabel menuju node <span className="font-mono underline font-bold">{packetPos.currentHopName}</span> ({packetPos.isReturn ? 'Arah Balik: Echo Reply' : 'Arah Pergi: Echo Request'})
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
+            <Info className="w-4 h-4 text-tealbrand-400 shrink-0" />
+            <span>
+              Tekan tombol <span className="text-tealbrand-300 font-bold">&quot;Kirim Paket ICMP Ping (✉️ Surat)&quot;</span> di panel samping untuk melihat surat digital bergerak dari perangkat asal menuju perangkat tujuan.
+            </span>
+          </div>
+        )}
+
+        {/* Progress Bar */}
+        <div className="space-y-1">
+          <div className="flex justify-between text-[11px] font-mono text-slate-400">
+            <span>Progres Perjalanan Surat (PDU Progress):</span>
+            <span className="font-bold text-tealbrand-400">{packetProgress}%</span>
+          </div>
+          <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800 p-0.5">
+            <div
+              className={`h-full rounded-full transition-all duration-100 ${
+                packetStage === 'failed'
+                  ? 'bg-rose-500'
+                  : packetStage === 'delivered'
+                  ? 'bg-emerald-400'
+                  : 'bg-gradient-to-r from-amber-500 via-tealbrand-400 to-indigo-500'
+              }`}
+              style={{ width: `${packetProgress}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* 5 Step Indicator Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 pt-1">
+          {[
+            {
+              step: 1,
+              title: '1. Buat Surat (Enkapsulasi)',
+              desc: 'Pengirim mengemas pesan 32 bytes ke dalam paket ICMP Type 8 (Echo Request).',
+              icon: '✉️',
+            },
+            {
+              step: 2,
+              title: '2. Meluncur di Kabel',
+              desc: 'Surat mengalir via Switch / Router perantara yang membaca alamat MAC & IP.',
+              icon: '🔀',
+            },
+            {
+              step: 3,
+              title: '3. Tiba di Tujuan',
+              desc: 'Perangkat tujuan membuka surat, mencatat waktu tiba, dan menyiapkan jawaban.',
+              icon: '🎯',
+            },
+            {
+              step: 4,
+              title: '4. Mengirim Balasan',
+              desc: 'Surat balasan ICMP Type 0 (Echo Reply) meluncur balik ke perangkat pengirim.',
+              icon: '🔄',
+            },
+            {
+              step: 5,
+              title: '5. Selesai (Sukses)',
+              desc: 'Pengirim menerima balasan. Waktu Round Trip (RTT) 1.2ms & 0% packet loss.',
+              icon: '✅',
+            },
+          ].map((item) => {
+            const isCurrent = currentStepIndex === item.step;
+            const isPast = currentStepIndex > item.step || packetStage === 'delivered';
+
+            return (
+              <div
+                key={item.step}
+                className={`p-3 rounded-xl border text-xs flex flex-col justify-between space-y-1.5 transition-all ${
+                  isCurrent
+                    ? 'bg-amber-500/15 border-amber-400 text-amber-200 ring-2 ring-amber-500/30 shadow-md'
+                    : isPast
+                    ? 'bg-slate-950/80 border-emerald-500/50 text-slate-300'
+                    : 'bg-slate-950/40 border-slate-800/80 text-slate-500'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-base">{item.icon}</span>
+                  <span
+                    className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                      isCurrent
+                        ? 'bg-amber-500 text-slate-950'
+                        : isPast
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : 'bg-slate-900 text-slate-600'
+                    }`}
+                  >
+                    Step {item.step}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-bold text-[11px] leading-tight text-white">{item.title}</p>
+                  <p className="text-[10px] text-slate-400 mt-1 leading-snug">{item.desc}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -1175,6 +1565,174 @@ export function NetworkTopologyLab({ onProgressUpdate }: { onProgressUpdate?: ()
           </div>
         </div>
       )}
+
+      {/* ============================================================== */}
+      {/* 6. MODAL INSPECTOR SURAT ICMP (PDU ENVELOPE DETAILS)           */}
+      {/* ============================================================== */}
+      {isPduModalOpen && (() => {
+        const srcNode = nodes.find((n) => n.id === pingSourceId) || nodes[0];
+        const dstNode = nodes.find((n) => n.id === pingDestId) || nodes[1];
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-slate-900 rounded-3xl border border-slate-700 w-full max-w-2xl p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-white flex items-center gap-2">
+                      <span>Anatomi Surat Digital ICMP (PDU Inspector)</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-tealbrand-500/20 text-tealbrand-300 font-mono font-bold">
+                        Cisco PDU Frame
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Struktur amplop dan isi surat yang mengalir di jaringan komputer saat perintah Ping dijalankan.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsPduModalOpen(false)}
+                  className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Envelope Visual Presentation Card */}
+              <div className="relative rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-400 p-0.5 shadow-xl">
+                <div className="bg-slate-950 rounded-[15px] p-5 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">✉️</span>
+                      <div>
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold block">
+                          Amplop Surat Digital PDU
+                        </span>
+                        <h4 className="font-bold text-sm text-white">
+                          ICMP Packet (Internet Control Message Protocol)
+                        </h4>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-mono bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg text-slate-300">
+                        Total Size: 64 Bytes (32B Data)
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Postal Header Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+                      <p className="text-[10px] font-mono uppercase text-slate-400 font-bold">
+                        📬 Pengirim (Sender / Source):
+                      </p>
+                      <p className="font-bold text-sm text-tealbrand-300">
+                        {srcNode ? srcNode.name : 'PC-1'}
+                      </p>
+                      <p className="font-mono text-[11px] text-slate-300">
+                        IP: {srcNode ? srcNode.ip : '192.168.1.10'}
+                      </p>
+                      <p className="font-mono text-[10px] text-slate-500">
+                        MAC: 00:50:79:66:{srcNode ? srcNode.id.slice(-2) : '01'}:AA
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+                      <p className="text-[10px] font-mono uppercase text-slate-400 font-bold">
+                        🎯 Penerima (Recipient / Dest):
+                      </p>
+                      <p className="font-bold text-sm text-amber-300">
+                        {dstNode ? dstNode.name : 'Web-Server'}
+                      </p>
+                      <p className="font-mono text-[11px] text-slate-300">
+                        IP: {dstNode ? dstNode.ip : '192.168.1.100'}
+                      </p>
+                      <p className="font-mono text-[10px] text-slate-500">
+                        MAC: 00:50:79:88:{dstNode ? dstNode.id.slice(-2) : 'FF'}:BB
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3 OSI Layers Breakdown */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-tealbrand-400" />
+                  <span>3 Lapisan Enkapsulasi Surat (OSI Model Layers):</span>
+                </h4>
+
+                {/* Layer 2: Data Link */}
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sky-400 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-sky-400"></span>
+                      1. Lapisan Fisik &amp; Data Link (Layer 2 - Ethernet Frame)
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-500">Kabel &amp; MAC</span>
+                  </div>
+                  <p className="text-slate-400 text-[11px] leading-relaxed">
+                    Amplop fisik yang ditempeli alamat MAC pengirim dan penerima. Digunakan oleh <strong className="text-slate-200">HUB dan Switch</strong> untuk meneruskan frame ke port tujuan yang tepat tanpa perlu memahami alamat IP.
+                  </p>
+                </div>
+
+                {/* Layer 3: Network IP */}
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-tealbrand-400 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-tealbrand-400"></span>
+                      2. Lapisan Jaringan (Layer 3 - IPv4 Packet Header)
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-500">TTL = 128 • Protocol = 1</span>
+                  </div>
+                  <p className="text-slate-400 text-[11px] leading-relaxed">
+                    Kepala surat berisi alamat IP global. Dilengkapi nilai <strong className="text-slate-200">TTL (Time to Live = 128)</strong> yang berkurang 1 setiap kali melewati router, mencegah surat berputar selamanya di jaringan jika terjadi rute loop.
+                  </p>
+                </div>
+
+                {/* Layer 4: ICMP Message Body */}
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-amber-400 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                      3. Isi Surat (ICMP Message Payload)
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-500">Type 8 / Type 0</span>
+                  </div>
+                  <div className="bg-slate-900 p-2.5 rounded-lg font-mono text-[11px] text-slate-300 space-y-1 border border-slate-800">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">ICMP Type:</span>
+                      <span className="text-amber-300 font-bold">8 (Echo Request saat pergi) / 0 (Echo Reply saat balik)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Data Payload:</span>
+                      <span className="text-emerald-400">&quot;abcdefghijklmnopqrstuvwabcdefghi&quot; (32 bytes)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Pesan Pedagogis:</span>
+                      <span className="text-slate-300">&quot;Halo host tujuan, apakah kamu aktif dan bisa menjawab?&quot;</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <div className="pt-2 flex justify-end">
+                <button
+                  onClick={() => setIsPduModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl bg-tealbrand-600 hover:bg-tealbrand-500 text-white font-bold text-xs shadow-lg transition-all"
+                >
+                  Tutup PDU Inspector
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
