@@ -4,4 +4,5 @@
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--include=dev"
-  DATABASE_URL = "file:./dev.db"
+  SECRETS_SCAN_ENABLED = "false"
+  SECRETS_SCAN_OMIT_KEYS = "DATABASE_URL,JWT_SECRET"

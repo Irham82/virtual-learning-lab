@@ -70,12 +70,12 @@ Buat file `.env` (atau salin dari `.env.example`):
 
 ```env
 # Database: SQLite untuk kemudahan instalasi lokal out-of-the-box
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="file:./prisma/dev.db"
 
 # Untuk PostgreSQL (Production / Supabase / Neon):
 # DATABASE_URL="postgresql://username:password@localhost:5432/virtual_lab?schema=public"
 
-JWT_SECRET="super-secret-jwt-key-virtual-learning-lab-2025-secure-token"
+JWT_SECRET="your-super-secret-jwt-key-change-in-production"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 NODE_ENV="development"
 ```
