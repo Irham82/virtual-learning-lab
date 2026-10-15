@@ -200,7 +200,8 @@ export function SDMathAdditionSubtractionLab({ onProgressUpdate }: SDMathAddSubL
     } else {
       let hint = 'Coba periksa lagi ';
       if (!isOnesCorrect) hint += 'kolom satuannya. ';
-      if (hasCarry && !isCarryCorrect) hint += 'Jangan lupa masukkan simpanan 1 di kotak atas puluhan! ';
+      if (hasCarry && !isCarryCorrect) hint += 'Karena hasil satuan sudah puluhan (lebih dari 9), masukkan angka 1 di kotak simpan puluhan! ';
+      if (!hasCarry && !isCarryCorrect) hint += 'Kotak simpan dikosongkan saja karena hasil satuan belum mencapai puluhan. ';
       if (!isTensCorrect) hint += 'kolom puluhannya. ';
       setCheckResult({ status: 'incorrect', message: hint });
     }
@@ -776,14 +777,14 @@ export function SDMathAdditionSubtractionLab({ onProgressUpdate }: SDMathAddSubL
 
             {/* Alert banner if addition > 9 (requires Carry) */}
             {operation === 'add' && hasCarry && (
-              <div className="p-3 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 text-amber-200 text-xs flex items-start gap-2.5 animate-pulse">
+              <div className="p-3 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 text-amber-200 text-xs flex items-start gap-2.5">
                 <Sparkles className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
                 <div>
                   <p className="font-bold text-amber-300">
-                    ⚡ Perhatian: Penjumlahan Satuan Lebih Dari 9! ({onesA} + {onesB} = {onesSum})
+                    ⚡ Petunjuk Nilai Tempat: Penjumlahan Satuan Menghasilkan Puluhan ({onesA} + {onesB} = {onesSum})
                   </p>
                   <p className="text-[11px] text-amber-200/90 mt-0.5">
-                    10 kubus satuan bergabung menjadi <strong>1 Puluhan</strong>. Kolom simpan di atas puluhan menyala! Masukkan angka <strong>1</strong> di kotak simpan atas puluhan.
+                    Karena hasil satuan sudah mencapai puluhan (≥ 10), masukkan angka simpanan <strong>1</strong> ke dalam kotak simpan di atas kolom puluhan, lalu tulis sisa satuannya di bawah.
                   </p>
                 </div>
               </div>
@@ -818,24 +819,34 @@ export function SDMathAdditionSubtractionLab({ onProgressUpdate }: SDMathAddSubL
                 </div>
               </div>
 
-              {/* Carry Row (Kotak Simpan di atas puluhan saat > 9) */}
+              {/* Carry Row (Kotak Simpan di atas puluhan) */}
               <div className="grid grid-cols-2 gap-8 w-64 text-center py-2 items-center">
                 <div className="flex justify-center">
-                  {operation === 'add' && hasCarry ? (
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-pink-400 font-bold">Simpan:</span>
+                  {operation === 'add' ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-pink-400 font-bold">Simpan:</span>
                       <input
                         type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         maxLength={1}
-                        placeholder="1"
                         value={inputCarry}
-                        onChange={(e) => setInputCarry(e.target.value)}
-                        className="w-8 h-8 rounded-xl bg-pink-500/20 border-2 border-pink-500 text-pink-300 font-mono font-bold text-center text-sm shadow-lg shadow-pink-500/30 animate-bounce focus:outline-none focus:ring-2 focus:ring-pink-400"
-                        title="Kotak Simpan 1 Puluhan"
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setInputCarry(val);
+                        }}
+                        className={`w-9 h-9 rounded-xl font-mono font-bold text-center text-sm focus:outline-none focus:ring-2 transition-colors ${
+                          inputCarry
+                            ? 'bg-pink-500/30 border-2 border-pink-400 text-pink-200 focus:ring-pink-400 shadow-md shadow-pink-500/20'
+                            : 'bg-slate-900 border-2 border-slate-700 hover:border-pink-500/60 text-pink-300 focus:ring-pink-400'
+                        }`}
+                        title="Kotak Simpan Nilai Puluhan (diisi siswa saat hasil satuan sudah puluhan)"
                       />
                     </div>
                   ) : (
-                    <span className="text-xs text-slate-700 font-mono">-</span>
+                    <div className="h-9 flex items-center justify-center">
+                      <span className="text-xs text-slate-700 font-mono">-</span>
+                    </div>
                   )}
                 </div>
                 <div></div>
