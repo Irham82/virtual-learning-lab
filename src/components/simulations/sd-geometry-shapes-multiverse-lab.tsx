@@ -913,60 +913,41 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
     } else if (shapeId === 'limas-segitiga') {
       // 5. LIMAS SEGITIGA (Tetrahedron)
       const s = 2.0;
-      const hTri = s * (Math.sqrt(3) / 2);
       const R = s / Math.sqrt(3);
       const r = R / 2;
       root.position.set(0, -0.5, 0);
 
-      // Base Equilateral Triangle
+      // Base Equilateral Triangle ABC
       const baseGeo = new THREE.BufferGeometry();
       baseGeo.setAttribute(
         'position',
-        new THREE.BufferAttribute(new Float32Array([0, 0, -R, s / 2, 0, r, -s / 2, 0, r]), 3)
+        new THREE.BufferAttribute(
+          new Float32Array([
+            0, 0, -R,      // Vertex A (North)
+            -s / 2, 0, r,  // Vertex C (South-West)
+            s / 2, 0, r    // Vertex B (South-East)
+          ]),
+          3
+        )
       );
       baseGeo.computeVertexNormals();
-      root.add(new THREE.Mesh(baseGeo, createFaceMaterial(0x10b981)));
+      const baseMesh = new THREE.Mesh(baseGeo, createFaceMaterial(0x10b981));
+      baseMesh.name = 'tetra_base';
+      root.add(baseMesh);
 
-      // South Face Hinge (at edge BC: z = r)
-      const southHinge = new THREE.Group();
-      southHinge.name = 'hinge_tetra_south';
-      southHinge.position.set(0, 0, r);
-      const sGeo = new THREE.BufferGeometry();
-      sGeo.setAttribute(
-        'position',
-        new THREE.BufferAttribute(new Float32Array([-s / 2, 0, 0, s / 2, 0, 0, 0, 0, hTri]), 3)
-      );
-      sGeo.computeVertexNormals();
-      southHinge.add(new THREE.Mesh(sGeo, createFaceMaterial(0x34d399)));
-      root.add(southHinge);
+      // 3 Dynamic Side Faces (South, North-East, North-West)
+      const createTetraFaceMesh = (name: string, color: number) => {
+        const geo = new THREE.BufferGeometry();
+        const verts = new Float32Array(9); // 3 vertices * 3 coords
+        geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+        const mesh = new THREE.Mesh(geo, createFaceMaterial(color));
+        mesh.name = name;
+        return mesh;
+      };
 
-      // North-East Face Hinge (at midpoint of AB: x = s/4, z = -r/2, rotated 120°)
-      const neHinge = new THREE.Group();
-      neHinge.name = 'hinge_tetra_ne';
-      neHinge.position.set(s / 4, 0, -r / 2);
-      neHinge.rotation.y = (2 * Math.PI) / 3;
-      const neGeo = new THREE.BufferGeometry();
-      neGeo.setAttribute(
-        'position',
-        new THREE.BufferAttribute(new Float32Array([-s / 2, 0, 0, s / 2, 0, 0, 0, 0, hTri]), 3)
-      );
-      neGeo.computeVertexNormals();
-      neHinge.add(new THREE.Mesh(neGeo, createFaceMaterial(0x059669)));
-      root.add(neHinge);
-
-      // North-West Face Hinge (at midpoint of AC: x = -s/4, z = -r/2, rotated -120°)
-      const nwHinge = new THREE.Group();
-      nwHinge.name = 'hinge_tetra_nw';
-      nwHinge.position.set(-s / 4, 0, -r / 2);
-      nwHinge.rotation.y = -(2 * Math.PI) / 3;
-      const nwGeo = new THREE.BufferGeometry();
-      nwGeo.setAttribute(
-        'position',
-        new THREE.BufferAttribute(new Float32Array([-s / 2, 0, 0, s / 2, 0, 0, 0, 0, hTri]), 3)
-      );
-      nwGeo.computeVertexNormals();
-      nwHinge.add(new THREE.Mesh(nwGeo, createFaceMaterial(0x047857)));
-      root.add(nwHinge);
+      root.add(createTetraFaceMesh('tetra_face_south', 0x34d399));
+      root.add(createTetraFaceMesh('tetra_face_ne', 0x059669));
+      root.add(createTetraFaceMesh('tetra_face_nw', 0x047857));
     } else if (shapeId === 'tabung') {
       // 6. TABUNG (Cylinder)
       const r = 0.9;
@@ -1109,17 +1090,67 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       if (eastHinge) eastHinge.rotation.z = foldAngle;
       if (westHinge) westHinge.rotation.z = -foldAngle;
     } else if (shapeId === 'limas-segitiga') {
-      const southHinge = group.getObjectByName('hinge_tetra_south');
-      const neHinge = group.getObjectByName('hinge_tetra_ne');
-      const nwHinge = group.getObjectByName('hinge_tetra_nw');
+      const southMesh = group.getObjectByName('tetra_face_south') as THREE.Mesh;
+      const neMesh = group.getObjectByName('tetra_face_ne') as THREE.Mesh;
+      const nwMesh = group.getObjectByName('tetra_face_nw') as THREE.Mesh;
 
-      // Regular tetrahedron dihedral angle: arccos(1/3) ~ 70.5 deg
-      // Folding angle from flat horizontal: π - arccos(1/3) ~ 109.5 deg
-      const foldTetra = (1 - unfoldT) * (Math.PI - Math.acos(1 / 3));
+      const s = 2.0;
+      const hTri = s * (Math.sqrt(3) / 2);
+      const R = s / Math.sqrt(3);
+      const r = R / 2;
+      const phiFold = Math.PI - Math.acos(1 / 3);
 
-      if (southHinge) southHinge.rotation.x = -foldTetra;
-      if (neHinge) neHinge.rotation.x = -foldTetra;
-      if (nwHinge) nwHinge.rotation.x = -foldTetra;
+      const phi = (1 - unfoldT) * phiFold;
+      const Y_rot = hTri * Math.sin(phi);
+      const Z_mid = r + hTri * Math.cos(phi);
+
+      // Apex coordinates as each face rotates around its base edge:
+      const pSouthApex = { x: 0, y: Y_rot, z: Z_mid };
+      const pNeApex = {
+        x: Z_mid * (Math.sqrt(3) / 2),
+        y: Y_rot,
+        z: -Z_mid / 2,
+      };
+      const pNwApex = {
+        x: -Z_mid * (Math.sqrt(3) / 2),
+        y: Y_rot,
+        z: -Z_mid / 2,
+      };
+
+      // Base vertices:
+      const vA = { x: 0, y: 0, z: -R };
+      const vB = { x: s / 2, y: 0, z: r };
+      const vC = { x: -s / 2, y: 0, z: r };
+
+      if (southMesh) {
+        const pos = southMesh.geometry.attributes.position as THREE.BufferAttribute;
+        // Edge BC + South Apex
+        pos.setXYZ(0, vC.x, vC.y, vC.z);
+        pos.setXYZ(1, vB.x, vB.y, vB.z);
+        pos.setXYZ(2, pSouthApex.x, pSouthApex.y, pSouthApex.z);
+        pos.needsUpdate = true;
+        southMesh.geometry.computeVertexNormals();
+      }
+
+      if (neMesh) {
+        const pos = neMesh.geometry.attributes.position as THREE.BufferAttribute;
+        // Edge AB + NE Apex
+        pos.setXYZ(0, vB.x, vB.y, vB.z);
+        pos.setXYZ(1, vA.x, vA.y, vA.z);
+        pos.setXYZ(2, pNeApex.x, pNeApex.y, pNeApex.z);
+        pos.needsUpdate = true;
+        neMesh.geometry.computeVertexNormals();
+      }
+
+      if (nwMesh) {
+        const pos = nwMesh.geometry.attributes.position as THREE.BufferAttribute;
+        // Edge CA + NW Apex
+        pos.setXYZ(0, vA.x, vA.y, vA.z);
+        pos.setXYZ(1, vC.x, vC.y, vC.z);
+        pos.setXYZ(2, pNwApex.x, pNwApex.y, pNwApex.z);
+        pos.needsUpdate = true;
+        nwMesh.geometry.computeVertexNormals();
+      }
     } else if (shapeId === 'tabung') {
       const botCircle = group.getObjectByName('cylinder_bottom');
       const topCircle = group.getObjectByName('cylinder_top');
@@ -2143,73 +2174,59 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
                         Alas
                       </text>
 
-                      {/* Flap 1 (Top) */}
-                      <g transform={`translate(0, -${35 + (unfoldPercent / 100) * 40})`}>
-                        <polygon
-                          points="0,0 -40,-60 40,-60"
-                          fill="#34d399"
-                          stroke="#ffffff"
-                          strokeWidth="1.5"
-                        />
-                        <text
-                          x="0"
-                          y="-30"
-                          fill="#000000"
-                          fontSize="9"
-                          fontWeight="bold"
-                          textAnchor="middle"
-                        >
-                          ▲ 1
-                        </text>
-                      </g>
-
-                      {/* Flap 2 (Bottom Left) */}
-                      <g
-                        transform={`translate(-${40 + (unfoldPercent / 100) * 35}, ${
-                          30 + (unfoldPercent / 100) * 35
-                        })`}
+                      {/* Bottom Flap (hinged along bottom edge: -40,30 to 40,30) */}
+                      <polygon
+                        points={`-40,30 40,30 0,${30 + (unfoldPercent / 100) * 65}`}
+                        fill="#34d399"
+                        stroke="#ffffff"
+                        strokeWidth="1.5"
+                      />
+                      <text
+                        x="0"
+                        y={30 + (unfoldPercent / 100) * 35}
+                        fill="#000000"
+                        fontSize="9"
+                        fontWeight="bold"
+                        textAnchor="middle"
                       >
-                        <polygon
-                          points="0,0 -50,20 -10,60"
-                          fill="#059669"
-                          stroke="#ffffff"
-                          strokeWidth="1.5"
-                        />
-                        <text
-                          x="-20"
-                          y="30"
-                          fill="#ffffff"
-                          fontSize="9"
-                          fontWeight="bold"
-                          textAnchor="middle"
-                        >
-                          ▲ 2
-                        </text>
-                      </g>
+                        ▲ 1
+                      </text>
 
-                      {/* Flap 3 (Bottom Right) */}
-                      <g
-                        transform={`translate(${40 + (unfoldPercent / 100) * 35}, ${
-                          30 + (unfoldPercent / 100) * 35
-                        })`}
+                      {/* North-East Flap (hinged along right edge: 0,-35 to 40,30) */}
+                      <polygon
+                        points={`0,-35 40,30 ${20 + (unfoldPercent / 100) * 56},${-2.5 - (unfoldPercent / 100) * 32.5}`}
+                        fill="#059669"
+                        stroke="#ffffff"
+                        strokeWidth="1.5"
+                      />
+                      <text
+                        x={15 + (unfoldPercent / 100) * 30}
+                        y={-8 - (unfoldPercent / 100) * 16}
+                        fill="#ffffff"
+                        fontSize="9"
+                        fontWeight="bold"
+                        textAnchor="middle"
                       >
-                        <polygon
-                          points="0,0 50,20 10,60"
-                          fill="#047857"
-                          stroke="#ffffff"
-                          strokeWidth="1.5"
-                        />
-                        <text
-                          x="20"
-                          y="30"
-                          fill="#ffffff"
-                          fontSize="9"
-                          fontWeight="bold"
-                          textAnchor="middle"
-                        >
-                          ▲ 3
-                        </text>
-                      </g>
+                        ▲ 2
+                      </text>
+
+                      {/* North-West Flap (hinged along left edge: 0,-35 to -40,30) */}
+                      <polygon
+                        points={`0,-35 -40,30 ${-20 - (unfoldPercent / 100) * 56},${-2.5 - (unfoldPercent / 100) * 32.5}`}
+                        fill="#047857"
+                        stroke="#ffffff"
+                        strokeWidth="1.5"
+                      />
+                      <text
+                        x={-15 - (unfoldPercent / 100) * 30}
+                        y={-8 - (unfoldPercent / 100) * 16}
+                        fill="#ffffff"
+                        fontSize="9"
+                        fontWeight="bold"
+                        textAnchor="middle"
+                      >
+                        ▲ 3
+                      </text>
                     </g>
                   )}
                 </svg>
