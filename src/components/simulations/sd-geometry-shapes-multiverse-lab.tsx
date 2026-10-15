@@ -529,15 +529,15 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
     pointLight.position.set(-6, 6, -4);
     scene.add(pointLight);
 
-    // 5. Grid Floor
-    const gridHelper = new THREE.GridHelper(16, 16, 0x334155, 0x1e293b);
-    gridHelper.position.y = -1.2;
-    scene.add(gridHelper);
-
-    // 6. Build Unfolding Shape Group
+    // 5. Build Unfolding Shape Group
     const shapeGroup = createUnfoldingShapeMesh(activeShape.id, activeShape.accentHex, isWireframe);
     currentMeshGroupRef.current = shapeGroup;
     scene.add(shapeGroup);
+
+    // 6. Grid Floor (aligned exactly with base of shape)
+    const gridHelper = new THREE.GridHelper(16, 16, 0x334155, 0x1e293b);
+    gridHelper.position.y = shapeGroup.position.y;
+    scene.add(gridHelper);
 
     // Orbit Drag Controls
     let isDragging = false;
@@ -637,9 +637,8 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
   // Build the 3D Unfolding Mesh Groups for each shape
   const createUnfoldingShapeMesh = (shapeId: string, colorHex: number, wireframe: boolean): THREE.Group => {
     const root = new THREE.Group();
-    root.position.y = 0;
 
-    const createFaceMaterial = (color: number, opacity = 0.9) =>
+    const createFaceMaterial = (color: number, opacity = 0.92) =>
       new THREE.MeshStandardMaterial({
         color,
         roughness: 0.35,
@@ -650,18 +649,19 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
         opacity,
       });
 
-    const s = 1.6; // Scale of base
-
     if (shapeId === 'kubus') {
-      // Cube: 6 square faces unfolding into a cross pattern
-      // Face 0: Bottom (Base grounded on floor)
+      // 1. KUBUS (Cube)
+      // Base: s x s at y = 0
+      const s = 1.6;
+      root.position.set(0, -0.8, 0);
+
       const baseMat = createFaceMaterial(0xf59e0b);
       const baseGeo = new THREE.PlaneGeometry(s, s);
       const baseMesh = new THREE.Mesh(baseGeo, baseMat);
       baseMesh.rotation.x = -Math.PI / 2;
       root.add(baseMesh);
 
-      // Face 1: North Face (hinged along North edge: z = -s/2)
+      // North Face: hinged along North edge (z = -s/2)
       const northHinge = new THREE.Group();
       northHinge.name = 'hinge_north';
       northHinge.position.set(0, 0, -s / 2);
@@ -672,7 +672,7 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       northMesh.rotation.x = -Math.PI / 2;
       northHinge.add(northMesh);
 
-      // Face 5: Top Face (hinged on the outer edge of North face: z = -s)
+      // Top Face: attached to outer edge of North face (z = -s)
       const topHinge = new THREE.Group();
       topHinge.name = 'hinge_top';
       topHinge.position.set(0, 0, -s);
@@ -685,7 +685,7 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       northHinge.add(topHinge);
       root.add(northHinge);
 
-      // Face 2: South Face (hinged along South edge: z = +s/2)
+      // South Face: hinged along South edge (z = +s/2)
       const southHinge = new THREE.Group();
       southHinge.name = 'hinge_south';
       southHinge.position.set(0, 0, s / 2);
@@ -697,7 +697,7 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       southHinge.add(southMesh);
       root.add(southHinge);
 
-      // Face 3: East Face (hinged along East edge: x = +s/2)
+      // East Face: hinged along East edge (x = +s/2)
       const eastHinge = new THREE.Group();
       eastHinge.name = 'hinge_east';
       eastHinge.position.set(s / 2, 0, 0);
@@ -709,7 +709,7 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       eastHinge.add(eastMesh);
       root.add(eastHinge);
 
-      // Face 4: West Face (hinged along West edge: x = -s/2)
+      // West Face: hinged along West edge (x = -s/2)
       const westHinge = new THREE.Group();
       westHinge.name = 'hinge_west';
       westHinge.position.set(-s / 2, 0, 0);
@@ -721,10 +721,11 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       westHinge.add(westMesh);
       root.add(westHinge);
     } else if (shapeId === 'balok') {
-      // Cuboid: length = 2.2, width = 1.4, height = 1.4
-      const p = 2.2;
+      // 2. BALOK (Cuboid)
+      const p = 2.4;
       const l = 1.4;
       const t = 1.4;
+      root.position.set(0, -0.7, 0);
 
       // Base: p x l
       const baseMat = createFaceMaterial(0x14b8a6);
@@ -741,7 +742,7 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       northMesh.rotation.x = -Math.PI / 2;
       northHinge.add(northMesh);
 
-      // Top Face attached to North: p x l
+      // Top Face: p x l
       const topHinge = new THREE.Group();
       topHinge.name = 'hinge_top';
       topHinge.position.set(0, 0, -t);
@@ -762,7 +763,7 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       southHinge.add(southMesh);
       root.add(southHinge);
 
-      // East Face: l x t
+      // East Face: t x l
       const eastHinge = new THREE.Group();
       eastHinge.name = 'hinge_east';
       eastHinge.position.set(p / 2, 0, 0);
@@ -772,7 +773,7 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       eastHinge.add(eastMesh);
       root.add(eastHinge);
 
-      // West Face: l x t
+      // West Face: t x l
       const westHinge = new THREE.Group();
       westHinge.name = 'hinge_west';
       westHinge.position.set(-p / 2, 0, 0);
@@ -781,76 +782,213 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       westMesh.rotation.x = -Math.PI / 2;
       westHinge.add(westMesh);
       root.add(westHinge);
+    } else if (shapeId === 'prisma-segitiga') {
+      // 3. PRISMA SEGITIGA (Triangular Prism)
+      const w = 1.6;
+      const L = 2.2;
+      const hTri = w * (Math.sqrt(3) / 2);
+      root.position.set(0, -0.6, 0);
+
+      // Center Base Rectangle: w x L
+      const baseMat = createFaceMaterial(0x8b5cf6);
+      const baseMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, L), baseMat);
+      baseMesh.rotation.x = -Math.PI / 2;
+      root.add(baseMesh);
+
+      // Left Rectangle Hinge (at x = -w/2)
+      const leftHinge = new THREE.Group();
+      leftHinge.name = 'hinge_left_rect';
+      leftHinge.position.set(-w / 2, 0, 0);
+      const leftMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, L), createFaceMaterial(0x7c3aed));
+      leftMesh.position.set(-w / 2, 0, 0);
+      leftMesh.rotation.x = -Math.PI / 2;
+      leftHinge.add(leftMesh);
+      root.add(leftHinge);
+
+      // Right Rectangle Hinge (at x = +w/2)
+      const rightHinge = new THREE.Group();
+      rightHinge.name = 'hinge_right_rect';
+      rightHinge.position.set(w / 2, 0, 0);
+      const rightMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, L), createFaceMaterial(0x6d28d9));
+      rightMesh.position.set(w / 2, 0, 0);
+      rightMesh.rotation.x = -Math.PI / 2;
+      rightHinge.add(rightMesh);
+      root.add(rightHinge);
+
+      // Front Triangle Hinge (at z = +L/2)
+      const frontTriHinge = new THREE.Group();
+      frontTriHinge.name = 'hinge_front_tri';
+      frontTriHinge.position.set(0, 0, L / 2);
+      const frontTriGeo = new THREE.BufferGeometry();
+      const frontVerts = new Float32Array([
+        -w / 2, 0, 0,
+        w / 2, 0, 0,
+        0, 0, hTri,
+      ]);
+      frontTriGeo.setAttribute('position', new THREE.BufferAttribute(frontVerts, 3));
+      frontTriGeo.computeVertexNormals();
+      const frontTriMesh = new THREE.Mesh(frontTriGeo, createFaceMaterial(0xa78bfa));
+      frontTriHinge.add(frontTriMesh);
+      root.add(frontTriHinge);
+
+      // Back Triangle Hinge (at z = -L/2)
+      const backTriHinge = new THREE.Group();
+      backTriHinge.name = 'hinge_back_tri';
+      backTriHinge.position.set(0, 0, -L / 2);
+      const backTriGeo = new THREE.BufferGeometry();
+      const backVerts = new Float32Array([
+        -w / 2, 0, 0,
+        w / 2, 0, 0,
+        0, 0, -hTri,
+      ]);
+      backTriGeo.setAttribute('position', new THREE.BufferAttribute(backVerts, 3));
+      backTriGeo.computeVertexNormals();
+      const backTriMesh = new THREE.Mesh(backTriGeo, createFaceMaterial(0xc4b5fd));
+      backTriHinge.add(backTriMesh);
+      root.add(backTriHinge);
     } else if (shapeId === 'limas-segiempat') {
-      // Pyramid: Square base, 4 Triangles
+      // 4. LIMAS SEGIEMPAT (Square Pyramid)
+      const s = 1.8;
+      const H = 1.6;
+      const hSlant = Math.sqrt(H * H + (s / 2) * (s / 2));
+      root.position.set(0, -0.6, 0);
+
+      // Base: s x s
       const baseMat = createFaceMaterial(0xeab308);
       const baseMesh = new THREE.Mesh(new THREE.PlaneGeometry(s, s), baseMat);
       baseMesh.rotation.x = -Math.PI / 2;
       root.add(baseMesh);
 
-      // Triangle Geometry
-      const hTri = 1.8;
-      const triGeo = new THREE.BufferGeometry();
-      const vertices = new Float32Array([-s / 2, 0, 0, s / 2, 0, 0, 0, 0, -hTri]);
-      triGeo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-      triGeo.computeVertexNormals();
-
-      // North Triangle
+      // North Triangle Hinge (at z = -s/2)
       const northHinge = new THREE.Group();
       northHinge.name = 'hinge_north_tri';
       northHinge.position.set(0, 0, -s / 2);
-      const northMesh = new THREE.Mesh(triGeo, createFaceMaterial(0xf59e0b));
-      northHinge.add(northMesh);
+      const nTriGeo = new THREE.BufferGeometry();
+      nTriGeo.setAttribute(
+        'position',
+        new THREE.BufferAttribute(new Float32Array([-s / 2, 0, 0, s / 2, 0, 0, 0, 0, -hSlant]), 3)
+      );
+      nTriGeo.computeVertexNormals();
+      northHinge.add(new THREE.Mesh(nTriGeo, createFaceMaterial(0xf59e0b)));
       root.add(northHinge);
 
-      // South Triangle
+      // South Triangle Hinge (at z = +s/2)
       const southHinge = new THREE.Group();
       southHinge.name = 'hinge_south_tri';
       southHinge.position.set(0, 0, s / 2);
-      const southMesh = new THREE.Mesh(triGeo, createFaceMaterial(0xd97706));
-      southMesh.rotation.y = Math.PI;
-      southHinge.add(southMesh);
+      const sTriGeo = new THREE.BufferGeometry();
+      sTriGeo.setAttribute(
+        'position',
+        new THREE.BufferAttribute(new Float32Array([-s / 2, 0, 0, s / 2, 0, 0, 0, 0, hSlant]), 3)
+      );
+      sTriGeo.computeVertexNormals();
+      southHinge.add(new THREE.Mesh(sTriGeo, createFaceMaterial(0xd97706)));
       root.add(southHinge);
 
-      // East Triangle
+      // East Triangle Hinge (at x = +s/2)
       const eastHinge = new THREE.Group();
       eastHinge.name = 'hinge_east_tri';
       eastHinge.position.set(s / 2, 0, 0);
-      const eastMesh = new THREE.Mesh(triGeo, createFaceMaterial(0xb45309));
-      eastMesh.rotation.y = -Math.PI / 2;
-      eastHinge.add(eastMesh);
+      const eTriGeo = new THREE.BufferGeometry();
+      eTriGeo.setAttribute(
+        'position',
+        new THREE.BufferAttribute(new Float32Array([0, 0, -s / 2, 0, 0, s / 2, hSlant, 0, 0]), 3)
+      );
+      eTriGeo.computeVertexNormals();
+      eastHinge.add(new THREE.Mesh(eTriGeo, createFaceMaterial(0xb45309)));
       root.add(eastHinge);
 
-      // West Triangle
+      // West Triangle Hinge (at x = -s/2)
       const westHinge = new THREE.Group();
       westHinge.name = 'hinge_west_tri';
       westHinge.position.set(-s / 2, 0, 0);
-      const westMesh = new THREE.Mesh(triGeo, createFaceMaterial(0x78350f));
-      westMesh.rotation.y = Math.PI / 2;
-      westHinge.add(westMesh);
+      const wTriGeo = new THREE.BufferGeometry();
+      wTriGeo.setAttribute(
+        'position',
+        new THREE.BufferAttribute(new Float32Array([0, 0, -s / 2, 0, 0, s / 2, -hSlant, 0, 0]), 3)
+      );
+      wTriGeo.computeVertexNormals();
+      westHinge.add(new THREE.Mesh(wTriGeo, createFaceMaterial(0x78350f)));
       root.add(westHinge);
+    } else if (shapeId === 'limas-segitiga') {
+      // 5. LIMAS SEGITIGA (Tetrahedron)
+      const s = 2.0;
+      const hTri = s * (Math.sqrt(3) / 2);
+      const R = s / Math.sqrt(3);
+      const r = R / 2;
+      root.position.set(0, -0.5, 0);
+
+      // Base Equilateral Triangle
+      const baseGeo = new THREE.BufferGeometry();
+      baseGeo.setAttribute(
+        'position',
+        new THREE.BufferAttribute(new Float32Array([0, 0, -R, s / 2, 0, r, -s / 2, 0, r]), 3)
+      );
+      baseGeo.computeVertexNormals();
+      root.add(new THREE.Mesh(baseGeo, createFaceMaterial(0x10b981)));
+
+      // South Face Hinge (at edge BC: z = r)
+      const southHinge = new THREE.Group();
+      southHinge.name = 'hinge_tetra_south';
+      southHinge.position.set(0, 0, r);
+      const sGeo = new THREE.BufferGeometry();
+      sGeo.setAttribute(
+        'position',
+        new THREE.BufferAttribute(new Float32Array([-s / 2, 0, 0, s / 2, 0, 0, 0, 0, hTri]), 3)
+      );
+      sGeo.computeVertexNormals();
+      southHinge.add(new THREE.Mesh(sGeo, createFaceMaterial(0x34d399)));
+      root.add(southHinge);
+
+      // North-East Face Hinge (at midpoint of AB: x = s/4, z = -r/2, rotated 120°)
+      const neHinge = new THREE.Group();
+      neHinge.name = 'hinge_tetra_ne';
+      neHinge.position.set(s / 4, 0, -r / 2);
+      neHinge.rotation.y = (2 * Math.PI) / 3;
+      const neGeo = new THREE.BufferGeometry();
+      neGeo.setAttribute(
+        'position',
+        new THREE.BufferAttribute(new Float32Array([-s / 2, 0, 0, s / 2, 0, 0, 0, 0, hTri]), 3)
+      );
+      neGeo.computeVertexNormals();
+      neHinge.add(new THREE.Mesh(neGeo, createFaceMaterial(0x059669)));
+      root.add(neHinge);
+
+      // North-West Face Hinge (at midpoint of AC: x = -s/4, z = -r/2, rotated -120°)
+      const nwHinge = new THREE.Group();
+      nwHinge.name = 'hinge_tetra_nw';
+      nwHinge.position.set(-s / 4, 0, -r / 2);
+      nwHinge.rotation.y = -(2 * Math.PI) / 3;
+      const nwGeo = new THREE.BufferGeometry();
+      nwGeo.setAttribute(
+        'position',
+        new THREE.BufferAttribute(new Float32Array([-s / 2, 0, 0, s / 2, 0, 0, 0, 0, hTri]), 3)
+      );
+      nwGeo.computeVertexNormals();
+      nwHinge.add(new THREE.Mesh(nwGeo, createFaceMaterial(0x047857)));
+      root.add(nwHinge);
     } else if (shapeId === 'tabung') {
-      // Cylinder: 2 circles and unrolling sleeve
+      // 6. TABUNG (Cylinder)
       const r = 0.9;
       const h = 2.0;
       const circGeo = new THREE.CircleGeometry(r, 32);
+      root.position.set(0, -1.0, 0);
 
       // Bottom Circle
       const botMesh = new THREE.Mesh(circGeo, createFaceMaterial(0x0284c7));
+      botMesh.name = 'cylinder_bottom';
       botMesh.rotation.x = -Math.PI / 2;
-      botMesh.position.y = -h / 2;
+      botMesh.position.set(0, 0, 0);
       root.add(botMesh);
 
-      // Top Circle Hinge
-      const topHinge = new THREE.Group();
-      topHinge.name = 'hinge_cylinder_top';
-      topHinge.position.set(0, h / 2, 0);
+      // Top Circle
       const topMesh = new THREE.Mesh(circGeo, createFaceMaterial(0x38bdf8));
+      topMesh.name = 'cylinder_top';
       topMesh.rotation.x = -Math.PI / 2;
-      topHinge.add(topMesh);
-      root.add(topHinge);
+      topMesh.position.set(0, h, 0);
+      root.add(topMesh);
 
-      // Unfolding Curved Sleeve (Segmented strips that unroll flat)
+      // Unrolling Curved Sleeve (24 segments)
       const sleeveGroup = new THREE.Group();
       sleeveGroup.name = 'cylinder_sleeve';
       const numSegments = 24;
@@ -864,9 +1002,39 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
         sleeveGroup.add(segMesh);
       }
       root.add(sleeveGroup);
+    } else if (shapeId === 'kerucut') {
+      // 7. KERUCUT (Cone)
+      const r = 1.0;
+      const H = 2.0;
+      const S = Math.sqrt(r * r + H * H);
+      root.position.set(0, -1.0, 0);
+
+      // Bottom Circle Base
+      const baseGeo = new THREE.CircleGeometry(r, 32);
+      const baseMesh = new THREE.Mesh(baseGeo, createFaceMaterial(0xf43f5e));
+      baseMesh.name = 'cone_base';
+      baseMesh.rotation.x = -Math.PI / 2;
+      baseMesh.position.set(0, 0, 0);
+      root.add(baseMesh);
+
+      // Unfolding Slanted Sleeve (32 triangular segments from apex to rim)
+      const sleeveGroup = new THREE.Group();
+      sleeveGroup.name = 'cone_sleeve';
+      const numSegments = 32;
+
+      for (let i = 0; i < numSegments; i++) {
+        const segGeo = new THREE.BufferGeometry();
+        // 3 vertices: Apex (0), Rim 1 (1), Rim 2 (2)
+        const verts = new Float32Array(9);
+        segGeo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+        const segMesh = new THREE.Mesh(segGeo, createFaceMaterial(0xe11d48));
+        segMesh.name = `cone_seg_${i}`;
+        sleeveGroup.add(segMesh);
+      }
+      root.add(sleeveGroup);
     } else {
-      // Generic prism/pyramid fallback mesh
-      const defaultGeo = new THREE.BoxGeometry(s, s, s);
+      // Fallback
+      const defaultGeo = new THREE.BoxGeometry(1.6, 1.6, 1.6);
       const defaultMesh = new THREE.Mesh(defaultGeo, createFaceMaterial(colorHex));
       root.add(defaultMesh);
     }
@@ -890,10 +1058,10 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       const angle = (1 - unfoldT) * (Math.PI / 2);
 
       if (northHinge) northHinge.rotation.x = angle;
-      if (topHinge) topHinge.rotation.x = angle; // Top rotates relative to north
+      if (topHinge) topHinge.rotation.x = angle;
       if (southHinge) southHinge.rotation.x = -angle;
-      if (eastHinge) eastHinge.rotation.z = -angle;
-      if (westHinge) westHinge.rotation.z = angle;
+      if (eastHinge) eastHinge.rotation.z = angle;    // Folds UPWARDS
+      if (westHinge) westHinge.rotation.z = -angle;   // Folds UPWARDS
     } else if (shapeId === 'balok') {
       const northHinge = group.getObjectByName('hinge_north');
       const topHinge = group.getObjectByName('hinge_top');
@@ -906,52 +1074,157 @@ export function SDGeometryShapesMultiverseLab({ onProgressUpdate }: SDGeometrySh
       if (northHinge) northHinge.rotation.x = angle;
       if (topHinge) topHinge.rotation.x = angle;
       if (southHinge) southHinge.rotation.x = -angle;
-      if (eastHinge) eastHinge.rotation.z = -angle;
-      if (westHinge) westHinge.rotation.z = angle;
+      if (eastHinge) eastHinge.rotation.z = angle;    // Folds UPWARDS
+      if (westHinge) westHinge.rotation.z = -angle;   // Folds UPWARDS
+    } else if (shapeId === 'prisma-segitiga') {
+      const leftHinge = group.getObjectByName('hinge_left_rect');
+      const rightHinge = group.getObjectByName('hinge_right_rect');
+      const frontTriHinge = group.getObjectByName('hinge_front_tri');
+      const backTriHinge = group.getObjectByName('hinge_back_tri');
+
+      // Slanted side rectangles fold up by 120 deg (2π/3) to reach 60 deg ridge
+      const foldSide = (1 - unfoldT) * ((2 * Math.PI) / 3);
+      // Triangular ends fold up by 90 deg (π/2) to stand vertical
+      const foldCap = (1 - unfoldT) * (Math.PI / 2);
+
+      if (leftHinge) leftHinge.rotation.z = -foldSide;
+      if (rightHinge) rightHinge.rotation.z = foldSide;
+      if (frontTriHinge) frontTriHinge.rotation.x = -foldCap;
+      if (backTriHinge) backTriHinge.rotation.x = foldCap;
     } else if (shapeId === 'limas-segiempat') {
       const northHinge = group.getObjectByName('hinge_north_tri');
       const southHinge = group.getObjectByName('hinge_south_tri');
       const eastHinge = group.getObjectByName('hinge_east_tri');
       const westHinge = group.getObjectByName('hinge_west_tri');
 
-      // Slant angle of pyramid is approx 68 degrees (1.18 rad)
-      const closedAngle = 1.15;
-      const angle = (1 - unfoldT) * closedAngle;
+      const s = 1.8;
+      const H = 1.6;
+      const alpha = Math.atan(H / (s / 2)); // Angle with ground ~ 60.6 deg
+      const phiFold = Math.PI - alpha;       // Folding angle from flat ~ 119.4 deg
 
-      if (northHinge) northHinge.rotation.x = angle;
-      if (southHinge) southHinge.rotation.x = -angle;
-      if (eastHinge) eastHinge.rotation.z = -angle;
-      if (westHinge) westHinge.rotation.z = angle;
+      const foldAngle = (1 - unfoldT) * phiFold;
+
+      if (northHinge) northHinge.rotation.x = foldAngle;
+      if (southHinge) southHinge.rotation.x = -foldAngle;
+      if (eastHinge) eastHinge.rotation.z = foldAngle;
+      if (westHinge) westHinge.rotation.z = -foldAngle;
+    } else if (shapeId === 'limas-segitiga') {
+      const southHinge = group.getObjectByName('hinge_tetra_south');
+      const neHinge = group.getObjectByName('hinge_tetra_ne');
+      const nwHinge = group.getObjectByName('hinge_tetra_nw');
+
+      // Regular tetrahedron dihedral angle: arccos(1/3) ~ 70.5 deg
+      // Folding angle from flat horizontal: π - arccos(1/3) ~ 109.5 deg
+      const foldTetra = (1 - unfoldT) * (Math.PI - Math.acos(1 / 3));
+
+      if (southHinge) southHinge.rotation.x = -foldTetra;
+      if (neHinge) neHinge.rotation.x = -foldTetra;
+      if (nwHinge) nwHinge.rotation.x = -foldTetra;
     } else if (shapeId === 'tabung') {
-      const topHinge = group.getObjectByName('hinge_cylinder_top');
+      const botCircle = group.getObjectByName('cylinder_bottom');
+      const topCircle = group.getObjectByName('cylinder_top');
       const sleeveGroup = group.getObjectByName('cylinder_sleeve');
 
-      if (topHinge) {
-        // Top circle flips open to z = r + unfoldT * 2
-        topHinge.rotation.x = (1 - unfoldT) * 0 + unfoldT * (Math.PI / 2);
-        topHinge.position.z = -unfoldT * 1.8;
+      const r = 0.9;
+      const h = 2.0;
+      const totalW = 2 * Math.PI * r;
+      const count = 24;
+
+      // Unroll top and bottom circles smoothly to flat positions
+      if (topCircle) {
+        topCircle.position.y = THREE.MathUtils.lerp(h, 0, unfoldT);
+        topCircle.position.z = THREE.MathUtils.lerp(0, -h / 2 - r, unfoldT);
+      }
+      if (botCircle) {
+        botCircle.position.y = 0;
+        botCircle.position.z = THREE.MathUtils.lerp(0, h / 2 + r, unfoldT);
       }
 
+      // Unroll sleeve from circular ring to flat rectangle on the floor
       if (sleeveGroup) {
-        const r = 0.9;
-        const totalW = 2 * Math.PI * r;
-        const count = 24;
-
         sleeveGroup.children.forEach((child, i) => {
-          // In closed state (unfoldT = 0): cylindrical arc positions
           const angle = (i / count) * Math.PI * 2;
+          // Closed state (unfoldT = 0)
           const closedX = Math.sin(angle) * r;
           const closedZ = Math.cos(angle) * r;
+          const closedY = h / 2;
           const closedRotY = angle;
+          const closedRotX = 0;
 
-          // In open state (unfoldT = 1): flat line along X axis
+          // Flat state (unfoldT = 1)
           const flatX = (i / count - 0.5) * totalW;
           const flatZ = 0;
+          const flatY = 0;
           const flatRotY = 0;
+          const flatRotX = -Math.PI / 2;
 
           child.position.x = THREE.MathUtils.lerp(closedX, flatX, unfoldT);
           child.position.z = THREE.MathUtils.lerp(closedZ, flatZ, unfoldT);
+          child.position.y = THREE.MathUtils.lerp(closedY, flatY, unfoldT);
           child.rotation.y = THREE.MathUtils.lerp(closedRotY, flatRotY, unfoldT);
+          child.rotation.x = THREE.MathUtils.lerp(closedRotX, flatRotX, unfoldT);
+        });
+      }
+    } else if (shapeId === 'kerucut') {
+      const baseCircle = group.getObjectByName('cone_base');
+      const sleeveGroup = group.getObjectByName('cone_sleeve');
+
+      const r = 1.0;
+      const H = 2.0;
+      const S = Math.sqrt(r * r + H * H);
+      const thetaSector = (r / S) * Math.PI * 2;
+      const count = 32;
+
+      // Base circle moves to tangent position when flat
+      if (baseCircle) {
+        baseCircle.position.y = 0;
+        baseCircle.position.z = THREE.MathUtils.lerp(0, S / 2 + r, unfoldT);
+      }
+
+      if (sleeveGroup) {
+        sleeveGroup.children.forEach((childMesh, i) => {
+          const mesh = childMesh as THREE.Mesh;
+          const posAttr = mesh.geometry.attributes.position as THREE.BufferAttribute;
+
+          const alpha1 = (i / count) * Math.PI * 2;
+          const alpha2 = ((i + 1) / count) * Math.PI * 2;
+
+          // Closed 3D cone vertex positions
+          const cApex = { x: 0, y: H, z: 0 };
+          const cP1 = { x: r * Math.sin(alpha1), y: 0, z: r * Math.cos(alpha1) };
+          const cP2 = { x: r * Math.sin(alpha2), y: 0, z: r * Math.cos(alpha2) };
+
+          // Flat 2D circular sector vertex positions (apex at z = -S/2, arc spreading out)
+          const beta1 = (i / count - 0.5) * thetaSector;
+          const beta2 = ((i + 1) / count - 0.5) * thetaSector;
+          const fApex = { x: 0, y: 0, z: -S / 2 };
+          const fP1 = { x: S * Math.sin(beta1), y: 0, z: -S / 2 + S * Math.cos(beta1) };
+          const fP2 = { x: S * Math.sin(beta2), y: 0, z: -S / 2 + S * Math.cos(beta2) };
+
+          // Lerp vertex 0 (Apex)
+          posAttr.setXYZ(
+            0,
+            THREE.MathUtils.lerp(cApex.x, fApex.x, unfoldT),
+            THREE.MathUtils.lerp(cApex.y, fApex.y, unfoldT),
+            THREE.MathUtils.lerp(cApex.z, fApex.z, unfoldT)
+          );
+          // Lerp vertex 1 (Rim 1)
+          posAttr.setXYZ(
+            1,
+            THREE.MathUtils.lerp(cP1.x, fP1.x, unfoldT),
+            THREE.MathUtils.lerp(cP1.y, fP1.y, unfoldT),
+            THREE.MathUtils.lerp(cP1.z, fP1.z, unfoldT)
+          );
+          // Lerp vertex 2 (Rim 2)
+          posAttr.setXYZ(
+            2,
+            THREE.MathUtils.lerp(cP2.x, fP2.x, unfoldT),
+            THREE.MathUtils.lerp(cP2.y, fP2.y, unfoldT),
+            THREE.MathUtils.lerp(cP2.z, fP2.z, unfoldT)
+          );
+
+          posAttr.needsUpdate = true;
+          mesh.geometry.computeVertexNormals();
         });
       }
     }
