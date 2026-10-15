@@ -417,6 +417,160 @@
       ]
     },
     {
+      "id": "cmv64ky7n0011geom5any8ocmt",
+      "title": "Lab Matematika SD: Eksplorasi Bangun Ruang & Jaring-Jaring (2D, 3D, AR & VR)",
+      "slug": "lab-matematika-sd-bangun-ruang",
+      "shortDescription": "Buka dan bedah bangun ruang (Kubus, Balok, Tabung, Kerucut, Prisma, Limas) menjadi jaring-jaring bangun datar pembentuknya secara interaktif dalam 2D, 3D, AR kamera, dan museum VR 360°!",
+      "fullDescription": "Laboratorium Virtual Matematika SD/MI (Fase B & C - Kelas 4, 5, 6) sesuai Kurikulum Merdeka untuk mempelajari Bangun Ruang dan Jaring-Jaring secara interaktif. Peserta didik dapat membuka dan merentangkan 7 macam bangun ruang (Kubus, Balok, Tabung, Kerucut, Prisma Segitiga, Limas Segiempat, dan Limas Segitiga) dengan slider animasi halus untuk melihat bangun datar pembentuknya (persegi, persegi panjang, lingkaran, juring lingkaran, dan segitiga). Dilengkapi dengan Mode 2D Edukasi dengan narasi suara ramah anak, Mode 3D Three.js yang dapat diputar 360°, Mode Augmented Reality (AR) di atas meja, Mode Virtual Reality (VR 360°) Ruang Angkasa, serta 5 modul eksperimen sains matematika (identifikasi jaring-jaring, rumus Euler F + V = E + 2, luas permukaan, isi volume kubus satuan, dan Kuis Juara Geometri).",
+      "subject": "Matematika SD (Kurikulum Merdeka)",
+      "learningObjectives": "[\"Mengenal 7 jenis bangun ruang: Kubus, Balok, Tabung, Kerucut, Prisma Segitiga, Limas Segiempat, dan Limas Segitiga.\",\"Membuka dan melipat jaring-jaring bangun ruang untuk mengidentifikasi bangun datar pembentuknya (persegi, segitiga, lingkaran, persegi panjang, juring).\",\"Menghitung dan memverifikasi jumlah Sisi (F), Titik Sudut (V), dan Rusuk (E) serta membuktikan Rumus Euler: F + V = E + 2.\",\"Memahami konsep luas permukaan sebagai jumlahan luas seluruh bangun datar pembentuknya.\",\"Memvisualisasikan volume bangun ruang melalui pengisian kubus satuan 1x1x1.\",\"Mengeksplorasi bangun ruang dalam 4 dimensi imersif: 2D Edukasi, 3D WebGL, Kamera AR Meja Nyata, dan Museum Antariksa VR 360°.\"]",
+      "prerequisites": "Pengenalan bangun datar dasar (persegi, persegi panjang, segitiga, lingkaran).",
+      "duration": 30,
+      "difficulty": "BEGINNER",
+      "thumbnail": "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=800&auto=format&fit=crop&q=80",
+      "simulationType": "THREE_D",
+      "simulationConfig": "{\"modes\":[\"2D\",\"3D\",\"AR\",\"VR\",\"EKSPERIMEN\"],\"enableVoice\":true,\"enableUnfolding\":true}",
+      "instructions": "1. Pilih mode belajar di bagian atas: Mode 2D Edukasi, Mode 3D Interaktif, 🧪 5 Modul Eksperimen, Mode AR (Kamera), atau Mode VR 360°.\n2. Geser penggeser (slider) \"Buka Jaring-Jaring (0% - 100%)\" untuk melihat proses bangun ruang terbuka menjadi lembaran bidang datar.\n3. Amati perubahan warna pada tiap sisi dan dengarkan penjelasan suara interaktif dengan mengklik tombol \"🔊 Dengarkan Narasi\".\n4. Pilih bentuk bangun ruang lain pada daftar (Kubus, Balok, Tabung, Kerucut, Prisma Segitiga, Limas Segiempat, Limas Segitiga).\n5. Selesaikan 5 eksperimen interaktif untuk membuktikan Rumus Euler, menghitung luas permukaan, dan mengisi volume kubus satuan!",
+      "status": "PUBLISHED",
+      "featured": true,
+      "viewCount": 395,
+      "publishedAt": "2026-10-15T08:00:00.000Z",
+      "createdAt": "2026-10-15T08:00:00.000Z",
+      "updatedAt": "2026-10-15T08:00:00.000Z",
+      "categoryId": "cmv64ky4v0007oum5udnewgp1",
+      "educationLevelId": "cmv64ky440002oum5xwibeph8",
+      "createdById": "cmv64ky3o0000oum5h17pu6w2",
+      "category": {
+        "id": "cmv64ky4v0007oum5udnewgp1",
+        "name": "Matematika",
+        "slug": "matematika",
+        "description": "Eksperimen rasio, aljabar, geometri interaktif, dan kalkulus visual.",
+        "icon": "Calculator",
+        "color": "blue",
+        "order": 1,
+        "createdAt": "2026-10-13T03:32:35.408Z",
+        "updatedAt": "2026-10-13T03:32:35.408Z"
+      },
+      "educationLevel": {
+        "id": "cmv64ky440002oum5xwibeph8",
+        "name": "SD / MI",
+        "slug": "sd-mi",
+        "description": "Tingkat Sekolah Dasar & Madrasah Ibtidaiyah",
+        "order": 1,
+        "createdAt": "2026-10-13T03:32:35.381Z",
+        "updatedAt": "2026-10-13T03:32:35.381Z"
+      },
+      "activities": [
+        {
+          "id": "act-sd-geom-01",
+          "laboratoryId": "cmv64ky7n0011geom5any8ocmt",
+          "stepNumber": 1,
+          "title": "Eksperimen 1: Buka-Tutup Jaring-Jaring & Identifikasi Bangun Datar Pembentuk",
+          "description": "Rentangkan kubus dan balok hingga 100% mendatar. Amati bahwa kubus terbentuk dari 6 persegi identik dan balok dari 3 pasang persegi panjang.",
+          "taskType": "EXPERIMENT",
+          "estimatedMinutes": 6,
+          "createdAt": "2026-10-15T08:00:00.000Z"
+        },
+        {
+          "id": "act-sd-geom-02",
+          "laboratoryId": "cmv64ky7n0011geom5any8ocmt",
+          "stepNumber": 2,
+          "title": "Eksperimen 2: Menghitung Sisi, Titik Sudut, Rusuk & Rumus Euler",
+          "description": "Hitung jumlah Sisi (F), Titik Sudut (V), dan Rusuk (E) pada Prisma dan Limas, lalu buktikan kebenaran rumus F + V = E + 2.",
+          "taskType": "OBSERVATION",
+          "estimatedMinutes": 6,
+          "createdAt": "2026-10-15T08:00:00.000Z"
+        },
+        {
+          "id": "act-sd-geom-03",
+          "laboratoryId": "cmv64ky7n0011geom5any8ocmt",
+          "stepNumber": 3,
+          "title": "Eksperimen 3: Konsep Luas Permukaan dari Penjumlahan Luas Sisi",
+          "description": "Ubah dimensi panjang, lebar, dan tinggi, lalu hitung total luas seluruh bidang datar jaring-jaring yang telah direntangkan.",
+          "taskType": "SIMULATION",
+          "estimatedMinutes": 6,
+          "createdAt": "2026-10-15T08:00:00.000Z"
+        },
+        {
+          "id": "act-sd-geom-04",
+          "laboratoryId": "cmv64ky7n0011geom5any8ocmt",
+          "stepNumber": 4,
+          "title": "Eksperimen 4: Mengisi Volume Bangun Ruang dengan Kubus Satuan 1x1x1",
+          "description": "Susun kubus-kubus satuan berukuran 1x1x1 ke dalam balok transparan dan hitung total kapasitas volume (p x l x t).",
+          "taskType": "EXPERIMENT",
+          "estimatedMinutes": 6,
+          "createdAt": "2026-10-15T08:00:00.000Z"
+        },
+        {
+          "id": "act-sd-geom-05",
+          "laboratoryId": "cmv64ky7n0011geom5any8ocmt",
+          "stepNumber": 5,
+          "title": "Eksperimen 5: Kuis Evaluasi Juara Geometri SD",
+          "description": "Jawab 5 soal tantangan seputar bangun datar penyusun jaring-jaring, sifat sisi dan rusuk, serta aplikasi dalam kehidupan sehari-hari.",
+          "taskType": "ANALYSIS",
+          "estimatedMinutes": 6,
+          "createdAt": "2026-10-15T08:00:00.000Z"
+        }
+      ],
+      "quizzes": [
+        {
+          "id": "quiz-sd-geom-01",
+          "laboratoryId": "cmv64ky7n0011geom5any8ocmt",
+          "title": "Kuis Juara Bangun Ruang & Jaring-Jaring SD",
+          "description": "Uji pemahamanmu tentang bangun ruang, bangun datar pembentuk jaring-jaring, dan sifat-sifat geometri!",
+          "passingScore": 70,
+          "createdAt": "2026-10-15T08:00:00.000Z",
+          "questions": [
+            {
+              "id": "q-sd-geom-01",
+              "quizId": "quiz-sd-geom-01",
+              "question": "Bangun ruang Kubus terbentuk dari jaring-jaring yang terdiri dari berapa bangun datar?",
+              "options": "[\"6 buah Persegi yang sama besar\",\"6 buah Persegi Panjang\",\"4 buah Segitiga dan 1 Persegi\",\"2 buah Lingkaran dan 1 Persegi Panjang\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Kubus memiliki 6 sisi datar yang semuanya berbentuk bujur sangkar / persegi kongruen (sama besar).",
+              "order": 1
+            },
+            {
+              "id": "q-sd-geom-02",
+              "quizId": "quiz-sd-geom-01",
+              "question": "Jika jaring-jaring tabung dibuka dan direntangkan, bangun datar apakah yang membentuk selimut dan alas/tutupnya?",
+              "options": "[\"1 Persegi Panjang (selimut) dan 2 Lingkaran (alas & tutup)\",\"2 Segitiga dan 3 Persegi Panjang\",\"1 Juring Lingkaran dan 1 Lingkaran\",\"4 Persegi dan 2 Lingkaran\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Tabung tersusun atas 2 lingkaran identik sebagai tutup dan alas, serta 1 persegi panjang melengkung sebagai selimut tabung dengan panjang = 2 x pi x r.",
+              "order": 2
+            },
+            {
+              "id": "q-sd-geom-03",
+              "quizId": "quiz-sd-geom-01",
+              "question": "Bangun ruang Kerucut tersusun dari bangun datar apa sajakah ketika jaring-jaringnya dibuka?",
+              "options": "[\"1 Lingkaran (alas) dan 1 Juring Lingkaran (selimut)\",\"2 Segitiga dan 1 Persegi\",\"1 Lingkaran dan 1 Persegi Panjang\",\"3 Segitiga sama sisi\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Selimut kerucut yang melengkung ketika dibuka mendatar berbentuk juring lingkaran (sektor), dan alasnya berbentuk lingkaran utuh.",
+              "order": 3
+            },
+            {
+              "id": "q-sd-geom-04",
+              "quizId": "quiz-sd-geom-01",
+              "question": "Sebuah Limas Segiempat memiliki sisi alas berbentuk persegi dan sisi tegak berbentuk...",
+              "options": "[\"4 buah Segitiga\",\"4 buah Persegi Panjang\",\"2 buah Lingkaran\",\"1 buah Trapesium\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Sisi tegak limas segiempat terdiri dari 4 segitiga yang puncaknya bertemu di satu titik sudut teratas.",
+              "order": 4
+            },
+            {
+              "id": "q-sd-geom-05",
+              "quizId": "quiz-sd-geom-01",
+              "question": "Berdasarkan Rumus Euler (Sisi + Titik Sudut = Rusuk + 2), sebuah prisma segitiga memiliki 5 sisi dan 6 titik sudut. Berapakah jumlah rusuknya?",
+              "options": "[\"9 rusuk\",\"6 rusuk\",\"12 rusuk\",\"8 rusuk\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Rumus Euler: F + V = E + 2. Maka 5 + 6 = E + 2 -> 11 = E + 2 -> E = 9 rusuk (3 di alas, 3 di tutup, 3 tegak).",
+              "order": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "cmv64kybx001noum54p56kon9",
       "title": "Lab Rasio dan Proporsi Matematika",
       "slug": "lab-rasio-matematika",

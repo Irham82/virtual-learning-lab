@@ -7,6 +7,7 @@ import { NetworkTopologyLab } from './network-topology-lab';
 import { SubnettingLab } from './subnetting-lab';
 import { SDSolarMultiverseLab } from './sd-solar-multiverse-lab';
 import { SDMathRatioMultiverseLab } from './sd-math-ratio-multiverse-lab';
+import { SDGeometryShapesMultiverseLab } from './sd-geometry-shapes-multiverse-lab';
 import { Maximize2, Minimize2, RotateCcw, Sparkles, Sliders, Play, CheckCircle2 } from 'lucide-react';
 
 interface LabSimulationEngineProps {
@@ -57,6 +58,9 @@ export function LabSimulationEngine({
 
       case 'lab-matematika-sd-rasio':
         return <SDMathRatioMultiverseLab onProgressUpdate={handleSimProgress} />;
+
+      case 'lab-matematika-sd-bangun-ruang':
+        return <SDGeometryShapesMultiverseLab onProgressUpdate={handleSimProgress} />;
 
       case 'lab-rasio-matematika':
         return <RatioLab onProgressUpdate={handleSimProgress} />;
