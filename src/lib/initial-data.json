@@ -571,6 +571,160 @@
       ]
     },
     {
+      "id": "cmv64ky7n0011addsub5any8ocmt",
+      "title": "Lab Matematika SD: Penjumlahan & Pengurangan Nilai Tempat (2D, 3D, AR & VR)",
+      "slug": "lab-matematika-sd-penjumlahan-pengurangan",
+      "shortDescription": "Papan hitung bersusun interaktif untuk penjumlahan dan pengurangan kelas 1-2 SD dengan teknik menyimpan (kolom puluhan otomatis muncul saat > 9), visualisasi Balok Dienes 2D, 3D spasial, AR kamera meja, dan VR 360°!",
+      "fullDescription": "Laboratorium Virtual Matematika SD/MI (Fase A - Kelas 1 dan 2) sesuai Kurikulum Merdeka untuk penguasaan konsep Penjumlahan dan Pengurangan Bilangan Cacah serta Nilai Tempat (Puluhan dan Satuan). Fitur unggulan: papan hitung bersusun interaktif di mana siswa memasukkan angka mandiri, kolom penyimpanan nilai puluhan (\"Kotak Simpan 1 Puluhan\") yang otomatis aktif saat penjumlahan satuan melebihi angka 9, pembongkaran 1 puluhan menjadi 10 satuan pada pengurangan meminjam, visualisasi konkrit Balok Dienes (batang puluhan & kubus satuan), audio narasi suara ramah anak dalam bahasa Indonesia, Mode 3D WebGL balok melayang, Mode Augmented Reality (AR) di atas meja nyata, Mode Virtual Reality (VR 360°) Planetarium Berhitung, serta 5 modul eksperimen sains matematika (Rumah Nilai Tempat, Penjumlahan Menyimpan, Pengurangan Meminjam, Garis Bilangan Lompat Katak, dan Kuis Juara Hitung SD).",
+      "subject": "Matematika SD (Kurikulum Merdeka)",
+      "learningObjectives": "[\"Memahami konsep nilai tempat bilangan cacah: Puluhan dan Satuan (1 - 99).\",\"Melakukan operasi penjumlahan bersusun dengan teknik menyimpan jika hasil satuan di atas angka sembilan (> 9).\",\"Melakukan operasi pengurangan bersusun dengan teknik meminjam (mengubah 1 puluhan menjadi 10 satuan).\",\"Memvisualisasikan operasi hitung secara konkrit menggunakan Balok Dienes (batang puluhan dan kubus satuan).\",\"Menghubungkan operasi matematika dengan garis bilangan lompat maju dan mundur.\",\"Mengeksplorasi matematika dalam 4 dimensi: 2D Edukasi Interaktif, 3D WebGL, Augmented Reality (AR), dan Virtual Reality (VR 360°).\"]",
+      "prerequisites": "Mengenal lambang bilangan cacah 1 sampai 20 dan konsep berhitung dasar.",
+      "duration": 30,
+      "difficulty": "BEGINNER",
+      "thumbnail": "https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=800&auto=format&fit=crop&q=80",
+      "simulationType": "THREE_D",
+      "simulationConfig": "{\"modes\":[\"2D\",\"3D\",\"AR\",\"VR\",\"EKSPERIMEN\"],\"enableCarryRegrouping\":true,\"maxDigits\":2,\"enableVoice\":true}",
+      "instructions": "1. Masukkan angka pertama dan kedua pada kotak angka atau geser slider bilangan.\n2. Perhatikan kolom Nilai Tempat: Biru untuk Puluhan dan Oranye untuk Satuan.\n3. Ketika jumlah satuan melebihi 9 (> 9), \"Kotak Simpan Puluhan\" berwarna merah jambu akan berkedip. Masukkan angka 1 pada kotak simpan dan sisa satuan pada kotak bawah.\n4. Klik tombol \"Cek Jawaban\" untuk mengevaluasi perhitungan dan mendengarkan narasi suara penjelasan.\n5. Buka tab Mode 3D, AR, VR, atau Modul Eksperimen untuk petualangan berhitung yang seru!",
+      "status": "PUBLISHED",
+      "featured": true,
+      "viewCount": 420,
+      "publishedAt": "2026-10-15T08:00:00.000Z",
+      "createdAt": "2026-10-15T08:00:00.000Z",
+      "updatedAt": "2026-10-15T08:00:00.000Z",
+      "categoryId": "cmv64ky4v0007oum5udnewgp1",
+      "educationLevelId": "cmv64ky440002oum5xwibeph8",
+      "createdById": "cmv64ky3o0000oum5h17pu6w2",
+      "category": {
+        "id": "cmv64ky4v0007oum5udnewgp1",
+        "name": "Matematika",
+        "slug": "matematika",
+        "description": "Eksperimen rasio, aljabar, geometri interaktif, dan kalkulus visual.",
+        "icon": "Calculator",
+        "color": "blue",
+        "order": 1,
+        "createdAt": "2026-10-13T03:32:35.408Z",
+        "updatedAt": "2026-10-13T03:32:35.408Z"
+      },
+      "educationLevel": {
+        "id": "cmv64ky440002oum5xwibeph8",
+        "name": "SD / MI",
+        "slug": "sd-mi",
+        "description": "Tingkat Sekolah Dasar & Madrasah Ibtidaiyah",
+        "order": 1,
+        "createdAt": "2026-10-13T03:32:35.381Z",
+        "updatedAt": "2026-10-13T03:32:35.381Z"
+      },
+      "activities": [
+        {
+          "id": "act-sd-addsub-01",
+          "laboratoryId": "cmv64ky7n0011addsub5any8ocmt",
+          "stepNumber": 1,
+          "title": "Eksperimen 1: Rumah Nilai Tempat (1 - 99) - Membedah Puluhan & Satuan",
+          "description": "Ubah bilangan cacah dari 1 sampai 99 dan perhatikan bagaimana bilangan tersebut dipecah menjadi kumpulan batang 10 (puluhan) dan kubus satuan.",
+          "taskType": "OBSERVATION",
+          "estimatedMinutes": 5,
+          "createdAt": "2026-10-15T08:00:00.000Z"
+        },
+        {
+          "id": "act-sd-addsub-02",
+          "laboratoryId": "cmv64ky7n0011addsub5any8ocmt",
+          "stepNumber": 2,
+          "title": "Eksperimen 2: Penjumlahan Di Atas Angka Sembilan (Teknik Menyimpan 1 Puluhan)",
+          "description": "Lakukan penjumlahan di mana satuan lebih dari sembilan (misal 8 + 5 = 13). Masukkan angka 1 ke Kotak Simpan Puluhan dan 3 ke Kolom Satuan.",
+          "taskType": "SIMULATION",
+          "estimatedMinutes": 7,
+          "createdAt": "2026-10-15T08:00:00.000Z"
+        },
+        {
+          "id": "act-sd-addsub-03",
+          "laboratoryId": "cmv64ky7n0011addsub5any8ocmt",
+          "stepNumber": 3,
+          "title": "Eksperimen 3: Pengurangan Meminjam (Memecah 1 Puluhan Menjadi 10 Satuan)",
+          "description": "Pecahkan kasus pengurangan ketika angka satuan yang dikurangi lebih kecil (misal 23 - 7). Bongkar 1 puluhan menjadi 10 kubus satuan.",
+          "taskType": "EXPERIMENT",
+          "estimatedMinutes": 7,
+          "createdAt": "2026-10-15T08:00:00.000Z"
+        },
+        {
+          "id": "act-sd-addsub-04",
+          "laboratoryId": "cmv64ky7n0011addsub5any8ocmt",
+          "stepNumber": 4,
+          "title": "Eksperimen 4: Garis Bilangan Lompat Katak Si Pintar (Maju + & Mundur -)",
+          "description": "Simulasikan pergerakan katak melompat ke depan pada penjumlahan dan melompat mundur pada pengurangan di sepanjang garis bilangan 0 - 20.",
+          "taskType": "EXPERIMENT",
+          "estimatedMinutes": 5,
+          "createdAt": "2026-10-15T08:00:00.000Z"
+        },
+        {
+          "id": "act-sd-addsub-05",
+          "laboratoryId": "cmv64ky7n0011addsub5any8ocmt",
+          "stepNumber": 5,
+          "title": "Eksperimen 5: Kuis Juara Evaluasi Hitung Cepat SD",
+          "description": "Jawab 5 soal tantangan seputar penjumlahan menyimpan, pengurangan meminjam, dan pengelompokan nilai tempat bilangan.",
+          "taskType": "ANALYSIS",
+          "estimatedMinutes": 6,
+          "createdAt": "2026-10-15T08:00:00.000Z"
+        }
+      ],
+      "quizzes": [
+        {
+          "id": "quiz-sd-addsub-01",
+          "laboratoryId": "cmv64ky7n0011addsub5any8ocmt",
+          "title": "Kuis Juara Hitung SD: Penjumlahan & Pengurangan Nilai Tempat",
+          "description": "Uji kemampuan berhitung penjumlahan menyimpan, pengurangan meminjam, dan nilai tempat!",
+          "passingScore": 70,
+          "createdAt": "2026-10-15T08:00:00.000Z",
+          "questions": [
+            {
+              "id": "q-sd-addsub-01",
+              "quizId": "quiz-sd-addsub-01",
+              "question": "Pada penjumlahan 8 + 7 = 15, berapakah angka yang disimpan pada kolom puluhan dan ditulis pada kolom satuan?",
+              "options": "[\"Simpan 1 pada puluhan, tulis 5 pada satuan\",\"Simpan 5 pada puluhan, tulis 1 pada satuan\",\"Tulis 15 langsung pada kolom satuan\",\"Simpan 2 pada puluhan, tulis 3 pada satuan\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Karena 8 + 7 = 15 (> 9), 10 satuan dikelompokkan menjadi 1 puluhan (disimpan di kolom puluhan), dan 5 satuan diletakkan pada kolom satuan.",
+              "order": 1
+            },
+            {
+              "id": "q-sd-addsub-02",
+              "quizId": "quiz-sd-addsub-01",
+              "question": "Bilangan 47 tersusun dari nilai tempat...",
+              "options": "[\"4 Puluhan dan 7 Satuan (40 + 7)\",\"7 Puluhan dan 4 Satuan (70 + 4)\",\"40 Puluhan dan 7 Satuan\",\"4 Ratusan dan 7 Puluhan\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Angka 4 menempati nilai puluhan bernilai 40, dan angka 7 menempati nilai satuan bernilai 7.",
+              "order": 2
+            },
+            {
+              "id": "q-sd-addsub-03",
+              "quizId": "quiz-sd-addsub-01",
+              "question": "Berapakah hasil dari penjumlahan bersusun 16 + 9?",
+              "options": "[\"25\",\"24\",\"15\",\"26\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Satuan: 6 + 9 = 15 (tulis 5, simpan 1 di puluhan). Puluhan: 1 + 1 (simpanan) = 2. Hasilnya adalah 25.",
+              "order": 3
+            },
+            {
+              "id": "q-sd-addsub-04",
+              "quizId": "quiz-sd-addsub-01",
+              "question": "Pada pengurangan 32 - 8, karena 2 lebih kecil dari 8, apa yang harus dilakukan?",
+              "options": "[\"Meminjam 1 puluhan (10) dari angka 3 sehingga satuan menjadi 12\",\"Mengurangkan 8 - 2 menjadi 6\",\"Mengubah pengurangan menjadi penjumlahan\",\"Menghapus angka 8\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Teknik meminjam: ambil 1 puluhan (10) dari 3 puluhan, sehingga puluhan tersisa 2, dan satuan menjadi 2 + 10 = 12. Lalu 12 - 8 = 4.",
+              "order": 4
+            },
+            {
+              "id": "q-sd-addsub-05",
+              "quizId": "quiz-sd-addsub-01",
+              "question": "Jika seekor katak berada di titik angka 7 pada garis bilangan, lalu melompat maju sebanyak 8 langkah, di titik manakah katak itu sekarang berada?",
+              "options": "[\"Titik 15 (karena 7 + 8 = 15)\",\"Titik 14\",\"Titik 1\",\"Titik 16\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Melompat maju artinya penjumlahan: 7 + 8 = 15.",
+              "order": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "cmv64kybx001noum54p56kon9",
       "title": "Lab Rasio dan Proporsi Matematika",
       "slug": "lab-rasio-matematika",
