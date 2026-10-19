@@ -562,29 +562,30 @@ export function LinearInequalitiesDhpLab({ onProgressUpdate }: LinearInequalitie
     axisMeshZ.position.set(0, 5, 0);
     mainGroup.add(axisMeshZ);
 
-    // Render 3D DHP Extruded Prism
+    // Render 3D DHP Extruded Prism standing UPWARDS above the grid floor
     if (dhpVertices.length >= 3) {
       const shape = new THREE.Shape();
       dhpVertices.forEach((v, idx) => {
         const x3d = v.x * scaleFactor;
-        const y3d = v.y * scaleFactor;
-        if (idx === 0) shape.moveTo(x3d, y3d);
-        else shape.lineTo(x3d, y3d);
+        const z3d = v.y * scaleFactor;
+        if (idx === 0) shape.moveTo(x3d, -z3d);
+        else shape.lineTo(x3d, -z3d);
       });
       shape.closePath();
 
       const extrudeSettings = {
         steps: 1,
-        depth: 2.2, // Prism height in 3D representing feasible volume
+        depth: 2.2, // Prism height rising upwards above the floor (Y >= 0)
         bevelEnabled: true,
-        bevelThickness: 0.15,
-        bevelSize: 0.15,
+        bevelThickness: 0.12,
+        bevelSize: 0.12,
         bevelSegments: 3,
       };
 
       const dhpGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-      // Rotate shape from XY to XZ plane so it lies on the floor
-      dhpGeo.rotateX(Math.PI / 2);
+      // Rotate shape so extrusion goes upwards (+Y >= 0) and lies flat on floor
+      dhpGeo.rotateX(-Math.PI / 2);
+      dhpGeo.computeVertexNormals();
 
       const dhpMaterial = new THREE.MeshStandardMaterial({
         color: 0xfacc15, // Golden yellow
@@ -593,6 +594,7 @@ export function LinearInequalitiesDhpLab({ onProgressUpdate }: LinearInequalitie
         transparent: true,
         opacity: isWireframe ? 0.3 : 0.85,
         wireframe: isWireframe,
+        side: THREE.DoubleSide,
       });
 
       const dhpMesh = new THREE.Mesh(dhpGeo, dhpMaterial);
