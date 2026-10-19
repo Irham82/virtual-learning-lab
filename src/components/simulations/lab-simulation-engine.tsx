@@ -9,6 +9,7 @@ import { SDSolarMultiverseLab } from './sd-solar-multiverse-lab';
 import { SDMathRatioMultiverseLab } from './sd-math-ratio-multiverse-lab';
 import { SDGeometryShapesMultiverseLab } from './sd-geometry-shapes-multiverse-lab';
 import { SDMathAdditionSubtractionLab } from './sd-math-addition-subtraction-lab';
+import { LinearInequalitiesDhpLab } from './linear-inequalities-dhp-lab';
 import { Maximize2, Minimize2, RotateCcw, Sparkles, Sliders, Play, CheckCircle2 } from 'lucide-react';
 
 interface LabSimulationEngineProps {
@@ -65,6 +66,9 @@ export function LabSimulationEngine({
 
       case 'lab-matematika-sd-penjumlahan-pengurangan':
         return <SDMathAdditionSubtractionLab onProgressUpdate={handleSimProgress} />;
+
+      case 'lab-matematika-sptldv-dhp':
+        return <LinearInequalitiesDhpLab onProgressUpdate={handleSimProgress} />;
 
       case 'lab-rasio-matematika':
         return <RatioLab onProgressUpdate={handleSimProgress} />;
