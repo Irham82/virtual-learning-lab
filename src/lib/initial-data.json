@@ -1673,6 +1673,160 @@
           ]
         }
       ]
+    },
+    {
+      "id": "cmv64ky7n0011titrasi5any8ocmt",
+      "title": "Lab Kimia: Titrasi Asam Basa & Kurva pH Real-Time (2D, 3D, AR & VR)",
+      "slug": "lab-kimia-titrasi-asam-basa",
+      "shortDescription": "Simulasi titrasi asam kuat (HCl) dan asam lemah (CH₃COOH) dengan basa kuat (NaOH). Amati buret interaktif, perubahan warna indikator PP di erlenmeyer, kurva pH Chart.js, dan animasi reaksi molekuler H⁺ + OH⁻ → H₂O!",
+      "fullDescription": "Laboratorium Virtual Kimia SMA/MA (Fase F - Stoikiometri Larutan & Larutan Asam Basa) untuk mempelajari proses titrasi asidimetri-alkalimetri secara kuantitatif dan kualitatif. Fitur unggulan: buret kaca bertetesan interaktif dengan keran klik, labu Erlenmeyer dengan perubahan warna bertahap indikator fenolftalein (bening ke pink pekat saat pH > 8.2), grafik kurva titrasi pH real-time berbasis pustaka Chart.js, kotak visualisasi animasi tingkat molekul (ion H⁺ dan OH⁻ bereaksi membentuk H₂O), perhitungan stoikiometri titik ekivalen (mol H⁺ = mol OH⁻), opsi variasi asam lemah CH₃COOH dengan hidrolisis garam basa (pH > 7), Mode 3D WebGL meja laboratorium, Mode AR kamera meja, Mode VR 360°, serta 5 modul eksperimen titrasi kimia terstruktur.",
+      "subject": "Kimia SMA/MA (Stoikiometri Larutan)",
+      "learningObjectives": "[\"Memahami prinsip dasar titrasi asidimetri dan alkalimetri serta stoikiometri penetralan.\",\"Menghitung perubahan pH larutan secara teoritis dan real-time selama penambahan titran basa kuat NaOH.\",\"Menerapkan rumus titik ekivalen ketika mol H⁺ tepat sama dengan mol OH⁻ (Va × Ma × na = Vb × Mb × nb).\",\"Menganalisis perbedaan bentuk kurva titrasi asam kuat (HCl) versus asam lemah (CH₃COOH) yang melibatkan daerah penyangga dan hidrolisis garam.\",\"Mengamati perubahan warna indikator fenolftalein (PP) pada rentang trayek pH 8.2 - 10.0 sebagai penanda titik akhir titrasi.\",\"Memvisualisasikan interaksi reaksi sub-mikroskopik pembentukan molekul H₂O dari ion H⁺ dan OH⁻.\"]",
+      "prerequisites": "Konsep mol, konsentrasi molaritas, ionisasi asam basa, dan perhitungan pH dasar.",
+      "duration": 45,
+      "difficulty": "INTERMEDIATE",
+      "thumbnail": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop&q=80",
+      "simulationType": "THREE_D",
+      "simulationConfig": "{\"modes\":[\"2D\",\"3D\",\"AR\",\"VR\",\"EKSPERIMEN\"],\"enableChartJs\":true,\"enableMolecularView\":true,\"enableVoice\":true}",
+      "instructions": "1. Pilih sampel asam yang akan diuji: Asam Kuat (HCl) atau Asam Lemah (CH₃COOH).\n2. Klik keran buret atau tombol \"+0.1 mL\" / \"+1.0 mL\" untuk meneteskan larutan basa NaOH ke dalam erlenmeyer.\n3. Perhatikan perubahan warna larutan di erlenmeyer: tetap bening saat asam, dan mulai berubah menjadi merah muda pudar saat mencapai trayek fenolftalein (pH > 8.2).\n4. Amati pergerakan titik pada grafik kurva titrasi Chart.js di kolom kanan untuk melihat lonjakan drastis pH di sekitar titik ekivalen.\n5. Perhatikan kotak animasi tingkat molekul di mana ion H⁺ bertabrakan dengan ion OH⁻ membentuk molekul netral H₂O!",
+      "status": "PUBLISHED",
+      "featured": true,
+      "viewCount": 420,
+      "publishedAt": "2026-10-22T08:00:00.000Z",
+      "createdAt": "2026-10-22T08:00:00.000Z",
+      "updatedAt": "2026-10-22T08:00:00.000Z",
+      "categoryId": "cmv64ky550009oum59zt7o77o",
+      "educationLevelId": "cmv64ky4f0004oum5pn3s3ygr",
+      "createdById": "cmv64ky3o0000oum5h17pu6w2",
+      "category": {
+        "id": "cmv64ky550009oum59zt7o77o",
+        "name": "Kimia",
+        "slug": "kimia",
+        "description": "Struktur atom, ikatan molekul, larutan asam basa, dan reaksi kimia.",
+        "icon": "FlaskConical",
+        "color": "purple",
+        "order": 3,
+        "createdAt": "2026-10-13T03:32:35.417Z",
+        "updatedAt": "2026-10-13T03:32:35.417Z"
+      },
+      "educationLevel": {
+        "id": "cmv64ky4f0004oum5pn3s3ygr",
+        "name": "SMA / MA",
+        "slug": "sma-ma",
+        "description": "Tingkat Sekolah Menengah Atas & MA (IPA/IPS)",
+        "order": 3,
+        "createdAt": "2026-10-13T03:32:35.391Z",
+        "updatedAt": "2026-10-13T03:32:35.391Z"
+      },
+      "activities": [
+        {
+          "id": "act-titrasi-01",
+          "laboratoryId": "cmv64ky7n0011titrasi5any8ocmt",
+          "stepNumber": 1,
+          "title": "Eksperimen 1: Titrasi Asam Kuat (HCl) dengan Basa Kuat (NaOH)",
+          "description": "Lakukan titrasi 25 mL HCl 0.1 M dengan NaOH 0.1 M. Amati lonjakan pH tajam dari pH 4 ke pH 10 dan titik ekivalen tepat di pH 7.00.",
+          "taskType": "SIMULATION",
+          "estimatedMinutes": 8,
+          "createdAt": "2026-10-22T08:00:00.000Z"
+        },
+        {
+          "id": "act-titrasi-02",
+          "laboratoryId": "cmv64ky7n0011titrasi5any8ocmt",
+          "stepNumber": 2,
+          "title": "Eksperimen 2: Titrasi Asam Lemah (CH₃COOH) & Daerah Penyangga (Buffer)",
+          "description": "Ganti sampel asam ke CH₃COOH. Amati daerah penyangga di mana kenaikan pH tertahan oleh sistem buffer asetat serta titik ekivalen di pH 8.72.",
+          "taskType": "EXPERIMENT",
+          "estimatedMinutes": 9,
+          "createdAt": "2026-10-22T08:00:00.000Z"
+        },
+        {
+          "id": "act-titrasi-03",
+          "laboratoryId": "cmv64ky7n0011titrasi5any8ocmt",
+          "stepNumber": 3,
+          "title": "Eksperimen 3: Deteksi Titik Ekivalen & Rentang Trayek Indikator PP",
+          "description": "Bandingkan perbedaan titik ekivalen teoritis (mol H⁺ = mol OH⁻) dengan titik akhir titrasi indikator fenolftalein pada pH 8.2 - 10.0.",
+          "taskType": "OBSERVATION",
+          "estimatedMinutes": 8,
+          "createdAt": "2026-10-22T08:00:00.000Z"
+        },
+        {
+          "id": "act-titrasi-04",
+          "laboratoryId": "cmv64ky7n0011titrasi5any8ocmt",
+          "stepNumber": 4,
+          "title": "Eksperimen 4: Analisis Perbandingan Kurva Titrasi Asam Kuat vs Asam Lemah",
+          "description": "Bandingkan kurva pH HCl vs CH₃COOH, perbedaan pH awal, kelandaian kurva buffer, dan pH titik ekivalen.",
+          "taskType": "ANALYSIS",
+          "estimatedMinutes": 10,
+          "createdAt": "2026-10-22T08:00:00.000Z"
+        },
+        {
+          "id": "act-titrasi-05",
+          "laboratoryId": "cmv64ky7n0011titrasi5any8ocmt",
+          "stepNumber": 5,
+          "title": "Eksperimen 5: Kuis Juara Stoikiometri & Titrasi Asam Basa SMA",
+          "description": "Selesaikan 5 soal evaluasi kuantitatif mengenai perhitungan konsentrasi titran, hidrolisis garam, dan kurva pH.",
+          "taskType": "ANALYSIS",
+          "estimatedMinutes": 10,
+          "createdAt": "2026-10-22T08:00:00.000Z"
+        }
+      ],
+      "quizzes": [
+        {
+          "id": "cmv64ky7n0011quiztitrasi5any",
+          "laboratoryId": "cmv64ky7n0011titrasi5any8ocmt",
+          "title": "Kuis Stoikiometri Titrasi Asam Basa SMA",
+          "description": "Uji kompetensi perhitungan konsentrasi, kurva titrasi, dan konsep penetralan asam-basa!",
+          "passingScore": 70,
+          "createdAt": "2026-10-22T08:00:00.000Z",
+          "questions": [
+            {
+              "id": "q-titrasi-01",
+              "quizId": "cmv64ky7n0011quiztitrasi5any",
+              "question": "Titik ekivalen pada titrasi asam basa secara stoikiometri tercapai pada saat keadaan...",
+              "options": "[\"Volume asam tepat sama dengan volume basa yang diteteskan\",\"Mol ion H+ dari asam tepat sama dengan mol ion OH- dari basa\",\"Massa asam tepat sama dengan massa basa dalam larutan\",\"Indikator fenolftalein berubah warna menjadi merah pekat\"]",
+              "correctOptionIndex": 1,
+              "explanation": "Titik ekivalen didefinisikan secara teoritis ketika jumlah ekuivalen asam (mol H+) sama dengan jumlah ekuivalen basa (mol OH-).",
+              "order": 1
+            },
+            {
+              "id": "q-titrasi-02",
+              "quizId": "cmv64ky7n0011quiztitrasi5any",
+              "question": "Pada titrasi 25 mL larutan HCl 0.1 M dengan larutan NaOH 0.1 M, berapakah nilai pH larutan tepat saat titik ekivalen tercapai?",
+              "options": "[\"pH = 7.00\",\"pH = 8.72\",\"pH = 1.00\",\"pH = 14.00\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Pada titrasi asam kuat dengan basa kuat, garam yang terbentuk (NaCl) tidak mengalami hidrolisis sehingga larutan bersifat netral pada pH 7.00.",
+              "order": 2
+            },
+            {
+              "id": "q-titrasi-03",
+              "quizId": "cmv64ky7n0011quiztitrasi5any",
+              "question": "Mengapa titik ekivalen pada titrasi asam lemah CH3COOH dengan basa kuat NaOH menghasilkan pH > 7 (sekitar pH 8.72)?",
+              "options": "[\"Karena asam asetat menguap selama proses titrasi berlangsung\",\"Karena NaOH yang digunakan memiliki konsentrasi yang jauh lebih tinggi\",\"Karena garam CH3COONa yang terbentuk mengalami hidrolisis anion parsial menghasilkan ion OH-\",\"Karena buret melepaskan ion natrium secara berlebihan\"]",
+              "correctOptionIndex": 2,
+              "explanation": "Garam CH3COONa terbentuk dari asam lemah dan basa kuat. Anion CH3COO- mengalami hidrolisis: CH3COO- + H2O <=> CH3COOH + OH-, sehingga pH > 7 pada titik ekivalen.",
+              "order": 3
+            },
+            {
+              "id": "q-titrasi-04",
+              "quizId": "cmv64ky7n0011quiztitrasi5any",
+              "question": "Indikator fenolftalein (PP) mengalami perubahan warna dari bening menjadi merah muda pada trayek rentang pH...",
+              "options": "[\"pH 1.2 - 2.8\",\"pH 8.2 - 10.0\",\"pH 4.2 - 6.3\",\"pH 6.0 - 7.6\"]",
+              "correctOptionIndex": 1,
+              "explanation": "Fenolftalein (PP) tidak berwarna pada pH < 8.2 dan berubah menjadi merah muda hingga magenta pada rentang pH 8.2 - 10.0.",
+              "order": 4
+            },
+            {
+              "id": "q-titrasi-05",
+              "quizId": "cmv64ky7n0011quiztitrasi5any",
+              "question": "Sebanyak 20 mL larutan HCl dititrasi dengan larutan standar NaOH 0.1 M. Jika titik ekivalen tercapai saat volume NaOH yang digunakan adalah 25 mL, berapakah konsentrasi HCl tersebut?",
+              "options": "[\"0.125 M\",\"0.100 M\",\"0.080 M\",\"0.200 M\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Va * Ma = Vb * Mb -> 20 * Ma = 25 * 0.1 -> 20 * Ma = 2.5 -> Ma = 2.5 / 20 = 0.125 M.",
+              "order": 5
+            }
+          ]
+        }
+      ]
     }
   ]
 }
