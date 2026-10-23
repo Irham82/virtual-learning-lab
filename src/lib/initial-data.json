@@ -128,19 +128,19 @@
   "labs": [
     {
       "id": "cmv64ky68000foum58bht6820",
-      "title": "Lab IPAS SD: Petualangan Mengenal Tata Surya (2D, 3D, AR & VR)",
+      "title": "Lab IPAS SD: Petualangan Mengenal Tata Surya & Proses Gerhana (2D, 3D, AR & VR)",
       "slug": "lab-ipas-sd-tata-surya",
-      "shortDescription": "Petualangan seru siswa SD mengenal Matahari dan 8 planet melalui visual 2D kartun, 3D orbit, kamera Augmented Reality (AR), dan kokpit Virtual Reality (VR)!",
-      "fullDescription": "Laboratorium Virtual IPAS (Ilmu Pengetahuan Alam dan Sosial) untuk tingkat SD/MI berdasarkan Kurikulum Merdeka. Siswa diajak berpetualang ke luar angkasa dengan 4 mode pengalaman belajar imersif: animasi interaktif 2D dengan suara narasi ramah anak, model 3D orbit Three.js, mode Augmented Reality (AR) yang memproyeksikan planet melayang di atas meja belajar dengan kamera nyata, serta mode Virtual Reality (VR) 360° yang menghadirkan sensasi duduk di kokpit pesawat antariksa.",
+      "shortDescription": "Petualangan seru siswa SD mengenal Matahari, 8 planet, dan proses terjadinya Gerhana Bulan & Gerhana Matahari melalui visual 2D kartun, 3D orbit, simulasi gerhana umbra-penumbra, kamera AR, dan kokpit VR!",
+      "fullDescription": "Laboratorium Virtual IPAS (Ilmu Pengetahuan Alam dan Sosial) untuk tingkat SD/MI berdasarkan Kurikulum Merdeka. Siswa diajak berpetualang ke luar angkasa dengan pengalaman belajar imersif: animasi interaktif 2D dengan suara narasi ramah anak, model 3D orbit Three.js, simulasi interaktif proses Gerhana Bulan dan Gerhana Matahari lengkap dengan kerucut bayangan Umbra dan Penumbra serta sudut pandang langit Bumi (Blood Moon & Korona Matahari), tantangan mini-game susun posisi gerhana, mode Augmented Reality (AR), serta mode Virtual Reality (VR) 360° kokpit pesawat antariksa.",
       "subject": "IPAS (Ilmu Pengetahuan Alam dan Sosial)",
-      "learningObjectives": "[\"Mengenal Matahari sebagai pusat tata surya yang memancarkan cahaya dan panasnya sendiri.\",\"Menyebutkan dan mengurutkan 8 planet dari yang terdekat hingga terjauh dari Matahari.\",\"Membedakan ciri unik planet (misalnya cincin Saturnus, planet merah Mars, dan Bumi rumah kita).\",\"Mengeksplorasi tata surya menggunakan pengalaman multi-sensori: 2D interaktif, 3D orbit, proyeksi AR, dan kokpit VR.\"]",
+      "learningObjectives": "[\"Mengenal Matahari sebagai pusat tata surya yang memancarkan cahaya dan panasnya sendiri.\",\"Menyebutkan dan mengurutkan 8 planet dari yang terdekat hingga terjauh dari Matahari.\",\"Membedakan ciri unik planet (misalnya cincin Saturnus, planet merah Mars, dan Bumi rumah kita).\",\"Memahami proses terjadinya Gerhana Matahari ketika Bulan berada di antara Matahari dan Bumi pada siang hari.\",\"Memahami proses terjadinya Gerhana Bulan ketika Bumi berada di antara Matahari dan Bulan pada malam hari (fase Bulan Purnama).\",\"Membedakan jenis bayangan Umbra (inti gelap) dan Penumbra (bayangan samar) serta dampaknya terhadap gerhana total dan sebagian.\",\"Mengeksplorasi tata surya menggunakan pengalaman multi-sensori: 2D interaktif, 3D orbit, simulasi gerhana, proyeksi AR, dan kokpit VR.\"]",
       "prerequisites": "Rasa ingin tahu dan pengantar dasar tentang siang dan malam.",
       "duration": 25,
       "difficulty": "BEGINNER",
       "thumbnail": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80",
       "simulationType": "THREE_D",
-      "simulationConfig": "{\"modes\":[\"2D\",\"3D\",\"AR\",\"VR\"],\"enableVoice\":true,\"enableMiniGame\":true}",
-      "instructions": "1. Pilih mode belajar di bagian atas: Mode 2D Edukasi, Mode 3D Orbit, Mode AR (Kamera), atau Mode VR 360°.\n2. Pada Mode 2D: Klik nama planet dan tekan tombol \"🔊 Suara Narasi\" untuk mendengarkan rahasia planet.\n3. Mainkan tantangan mini-game untuk menyusun 8 planet sesuai urutannya dari Matahari.\n4. Coba Mode AR dengan mengarahkan kamera ke meja belajarmu untuk melihat planet melayang di dunia nyata!\n5. Coba Mode VR untuk merasakan terbang di dalam kokpit pesawat antariksa mengitari planet.",
+      "simulationConfig": "{\"modes\":[\"2D\",\"3D\",\"GERHANA\",\"AR\",\"VR\"],\"enableVoice\":true,\"enableMiniGame\":true}",
+      "instructions": "1. Pilih mode belajar di bagian atas: Mode 3D Orbit, Mode Gerhana (Bulan & Matahari), 6 Modul Eksperimen, Mode 2D Edukasi, Mode AR, atau Mode VR 360°.\n2. Pada Mode Gerhana: Geser slider garis waktu untuk melihat bagaimana Bulan atau Bumi menutupi cahaya, amati daerah Umbra (gelap inti) dan Penumbra (samar), serta amati perubahan langit Bumi (Korona Matahari & Blood Moon)!\n3. Mainkan tantangan mini-game untuk menyusun posisi benda langit penghasil gerhana.\n4. Selesaikan 6 modul eksperimen sains dan kuis evaluasi pemahaman antariksa.",
       "status": "PUBLISHED",
       "featured": true,
       "viewCount": 420,
@@ -220,14 +220,24 @@
           "taskType": "ANALYSIS",
           "estimatedMinutes": 6,
           "createdAt": "2026-10-13T03:32:35.482Z"
+        },
+        {
+          "id": "cmv64ky6z000qoum5gerhana99",
+          "laboratoryId": "cmv64ky68000foum58bht6820",
+          "stepNumber": 6,
+          "title": "Eksperimen 6: Menyelidiki Proses Gerhana Bulan dan Gerhana Matahari",
+          "description": "Amati pembentukan bayangan Umbra dan Penumbra saat Matahari, Bumi, dan Bulan sejajar dalam satu garis lurus serta amati fenomena Blood Moon dan Korona.",
+          "taskType": "OBSERVATION",
+          "estimatedMinutes": 7,
+          "createdAt": "2026-10-23T08:00:00.000Z"
         }
       ],
       "quizzes": [
         {
           "id": "cmv64ky72000roum5c2ee8efx",
           "laboratoryId": "cmv64ky68000foum58bht6820",
-          "title": "Kuis Antariksawan Cilik: Rahasia Tata Surya",
-          "description": "Uji wawasanmu tentang Matahari dan planet-planet di tata surya!",
+          "title": "Kuis Antariksawan Cilik: Rahasia Tata Surya & Gerhana",
+          "description": "Uji wawasanmu tentang Matahari, planet-planet, serta proses terjadinya Gerhana Matahari dan Bulan!",
           "passingScore": 70,
           "createdAt": "2026-10-13T03:32:35.487Z",
           "questions": [
@@ -266,6 +276,24 @@
               "correctOptionIndex": 0,
               "explanation": "Merkurius adalah planet pertama yang posisinya paling dekat dengan Matahari.",
               "order": 4
+            },
+            {
+              "id": "cmv64ky7m0010oum5gerh1q1",
+              "quizId": "cmv64ky72000roum5c2ee8efx",
+              "question": "Pada saat terjadi Gerhana Matahari, bagaimanakah susunan posisi ketiga benda langit yang berada dalam satu garis lurus?",
+              "options": "[\"Matahari - Bulan - Bumi\",\"Matahari - Bumi - Bulan\",\"Bumi - Matahari - Bulan\",\"Bulan - Matahari - Bumi\"]",
+              "correctOptionIndex": 0,
+              "explanation": "Gerhana Matahari terjadi ketika Bulan berada di tengah-tengah antara Matahari dan Bumi sehingga cahaya matahari ke Bumi terhalang oleh Bulan.",
+              "order": 5
+            },
+            {
+              "id": "cmv64ky7m0011oum5gerh2q2",
+              "quizId": "cmv64ky72000roum5c2ee8efx",
+              "question": "Mengapa pada saat Gerhana Bulan Total permukaan Bulan tampak berwarna merah tembaga atau merah darah (Blood Moon)?",
+              "options": "[\"Karena Bulan mengeluarkan api panas dari kawahnya\",\"Karena atmosfer Bumi membiaskan cahaya merah matahari ke arah Bulan (hamburan Rayleigh)\",\"Karena Bulan memantulkan cahaya planet Mars\",\"Karena Matahari berubah warna menjadi merah\"]",
+              "correctOptionIndex": 1,
+              "explanation": "Atmosfer Bumi menyaring warna biru dan membelokkan berkas cahaya merah matahari ke permukaan Bulan, membuat bulan tampak merah tembaga (Blood Moon).",
+              "order": 6
             }
           ]
         }

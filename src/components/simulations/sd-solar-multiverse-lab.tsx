@@ -31,6 +31,8 @@ import {
   Zap,
   Globe,
   Award,
+  AlertTriangle,
+  HelpCircle,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -260,13 +262,34 @@ export const PLANETS_SD: PlanetSD[] = [
   },
 ];
 
-type SimulationMode = '2D' | '3D' | 'AR' | 'VR' | 'EKSPERIMEN';
+type SimulationMode = '3D' | 'GERHANA' | 'EKSPERIMEN' | '2D' | 'AR' | 'VR';
 
 export function SDSolarMultiverseLab({ onProgressUpdate }: SDSolarLabProps) {
   const [mode, setMode] = useState<SimulationMode>('3D');
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetSD>(PLANETS_SD[2]); // Default Bumi
   const [showPlanetModal, setShowPlanetModal] = useState<boolean>(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  // ==============================================================
+  // GERHANA (ECLIPSE) STATE
+  // ==============================================================
+  const [eclipseType, setEclipseType] = useState<'matahari' | 'bulan'>('matahari');
+  const [solarSubtype, setSolarSubtype] = useState<'total' | 'sebagian' | 'cincin'>('total');
+  const [lunarSubtype, setLunarSubtype] = useState<'total' | 'sebagian' | 'penumbra'>('total');
+  const [eclipseProgress, setEclipseProgress] = useState<number>(50); // 0 to 100% (50 = peak)
+  const [isEclipsePlaying, setIsEclipsePlaying] = useState<boolean>(false);
+  const [eclipseSpeed, setEclipseSpeed] = useState<number>(1);
+  const [activeEclipseTab, setActiveEclipseTab] = useState<'simulasi' | 'susun_posisi' | 'tabel_ilmu'>('simulasi');
+  const [selectedRayZone, setSelectedRayZone] = useState<'umbra' | 'penumbra' | null>(null);
+
+  // Alignment Game State
+  const [alignEclipseTarget, setAlignEclipseTarget] = useState<'matahari' | 'bulan'>('matahari');
+  const [alignSlots, setAlignSlots] = useState<{ slot1: string | null; slot2: string | null; slot3: string | null }>({
+    slot1: null,
+    slot2: null,
+    slot3: null,
+  });
+  const [alignFeedback, setAlignFeedback] = useState<{ isSuccess: boolean; message: string } | null>(null);
 
   // Mini-Game 2D state
   const [userOrder, setUserOrder] = useState<string[]>([]);
@@ -289,9 +312,9 @@ export function SDSolarMultiverseLab({ onProgressUpdate }: SDSolarLabProps) {
   const [vrWarpSpeed, setVrWarpSpeed] = useState(1);
 
   // ==============================================================
-  // 5 EXPERIMENTS STATE
+  // 6 EXPERIMENTS STATE
   // ==============================================================
-  const [activeExp, setActiveExp] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [activeExp, setActiveExp] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
 
   // Exp 1: Poros & Rotasi
   const [exp1PlanetId, setExp1PlanetId] = useState<string>('bumi');
@@ -352,6 +375,109 @@ export function SDSolarMultiverseLab({ onProgressUpdate }: SDSolarLabProps) {
       } else {
         setHasWonGame(false);
         setGameFeedback('Urutan masih belum tepat. Ayo periksa kembali urutan planet terdekat ke terjauh!');
+      }
+    }
+  };
+
+  // Eclipse Autoplay Loop
+  useEffect(() => {
+    if (!isEclipsePlaying) return;
+    const interval = setInterval(() => {
+      setEclipseProgress((prev) => {
+        if (prev >= 100) return 0;
+        return Math.min(100, Math.round((prev + 0.5 * eclipseSpeed) * 10) / 10);
+      });
+    }, 50);
+    return () => clearInterval(interval);
+  }, [isEclipsePlaying, eclipseSpeed]);
+
+  // Eclipse Speech Narration
+  const speakEclipseFact = (type: 'matahari' | 'bulan', subtype: string) => {
+    if (typeof window === 'undefined') return;
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      let textToSpeak = '';
+      if (type === 'matahari') {
+        if (subtype === 'total') {
+          textToSpeak = 'Gerhana Matahari Total terjadi saat siang hari ketika Matahari, Bulan, dan Bumi berada dalam satu garis lurus sempurna. Bulan menutupi seluruh piringan matahari sehingga siang hari tiba-tiba menjadi gelap gulita selama beberapa menit dan tampak korona putih keemasan yang indah di sekeliling bulan! Jangan lupa gunakan kacamata filter khusus saat melihatnya ya!';
+        } else if (subtype === 'cincin') {
+          textToSpeak = 'Gerhana Matahari Cincin terjadi ketika posisi Bulan berada di titik terjauh dari Bumi. Ukuran tampak Bulan lebih kecil daripada Matahari, sehingga menyisakan cincin cahaya emas menyala di sekelilingnya seperti cincin api!';
+        } else {
+          textToSpeak = 'Gerhana Matahari Sebagian terjadi ketika bayangan penumbra Bulan jatuh ke permukaan Bumi. Piringan Matahari hanya tertutup sebagian seperti bulan sabit yang bercahaya!';
+        }
+      } else {
+        if (subtype === 'total') {
+          textToSpeak = 'Gerhana Bulan Total terjadi pada malam hari saat Bulan Purnama. Bumi kita berada tepat di antara Matahari dan Bulan. Seluruh permukaan Bulan masuk ke dalam bayangan umbra Bumi dan berubah warna menjadi merah tembaga atau merah darah yang disebut Blood Moon, karena atmosfer Bumi membiaskan cahaya merah matahari ke arah Bulan! Sangat aman dilihat dengan mata telanjang!';
+        } else if (subtype === 'sebagian') {
+          textToSpeak = 'Gerhana Bulan Sebagian terjadi ketika hanya sebagian permukaan Bulan yang masuk ke dalam bayangan umbra Bumi, sementara bagian lainnya masih terkena sinar matahari!';
+        } else {
+          textToSpeak = 'Gerhana Bulan Penumbra terjadi ketika Bulan melintasi bayangan penumbra Bumi yang samar. Cahaya Bulan hanya akan tampak sedikit lebih redup dari biasanya!';
+        }
+      }
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.lang = 'id-ID';
+      utterance.rate = 0.95;
+      utterance.onstart = () => setIsPlayingAudio(true);
+      utterance.onend = () => setIsPlayingAudio(false);
+      utterance.onerror = () => setIsPlayingAudio(false);
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Alignment Game handlers
+  const handlePlaceAlignItem = (item: string) => {
+    if (!alignSlots.slot1) {
+      setAlignSlots({ ...alignSlots, slot1: item });
+    } else if (!alignSlots.slot2) {
+      setAlignSlots({ ...alignSlots, slot2: item });
+    } else if (!alignSlots.slot3) {
+      setAlignSlots({ ...alignSlots, slot3: item });
+    }
+  };
+
+  const handleClearAlignSlots = () => {
+    setAlignSlots({ slot1: null, slot2: null, slot3: null });
+    setAlignFeedback(null);
+  };
+
+  const handleCheckAlignment = () => {
+    const { slot1, slot2, slot3 } = alignSlots;
+    if (!slot1 || !slot2 || !slot3) {
+      setAlignFeedback({ isSuccess: false, message: 'Harap isi ketiga posisi benda langit terlebih dahulu!' });
+      return;
+    }
+
+    if (alignEclipseTarget === 'matahari') {
+      if (slot1 === 'matahari' && slot2 === 'bulan' && slot3 === 'bumi') {
+        setAlignFeedback({
+          isSuccess: true,
+          message: '🎉 LUAR BIASA BENAR! Ketika Bulan berada di tengah-tengah antara Matahari dan Bumi, Bulan menghalangi sinar matahari ke Bumi sehingga tercipta GERHANA MATAHARI!',
+        });
+        confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+        setEclipseType('matahari');
+        setEclipseProgress(50);
+        setIsEclipsePlaying(true);
+      } else {
+        setAlignFeedback({
+          isSuccess: false,
+          message: 'Susunan belum tepat untuk Gerhana Matahari. Ingat: Matahari adalah sumber cahaya, Bulan berada di tengah menghalangi, dan Bumi menerima bayangan!',
+        });
+      }
+    } else {
+      if (slot1 === 'matahari' && slot2 === 'bumi' && slot3 === 'bulan') {
+        setAlignFeedback({
+          isSuccess: true,
+          message: '🎉 HEBAT SEKALI! Ketika Bumi berada tepat di antara Matahari dan Bulan, bayangan raksasa Bumi menutupi permukaan Bulan sehingga tercipta GERHANA BULAN (Blood Moon)!',
+        });
+        confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+        setEclipseType('bulan');
+        setEclipseProgress(50);
+        setIsEclipsePlaying(true);
+      } else {
+        setAlignFeedback({
+          isSuccess: false,
+          message: 'Susunan belum tepat untuk Gerhana Bulan. Ingat: Bumi harus berada di tengah di antara Matahari dan Bulan agar bayangan Bumi jatuh ke Bulan!',
+        });
       }
     }
   };
@@ -706,14 +832,14 @@ export function SDSolarMultiverseLab({ onProgressUpdate }: SDSolarLabProps) {
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight mt-1">
-            Petualangan Mengenal Tata Surya (2D, 3D, AR, VR &amp; Eksperimen)
+            Petualangan Mengenal Tata Surya (2D, 3D, Gerhana, AR &amp; VR)
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Eksplorasi tata surya lengkap: Animasi 2D, Orbit 3D interaktif yang jelas, Kamera AR, Kokpit VR, serta 5 Modul Eksperimen Sains!
+            Eksplorasi tata surya lengkap: Animasi 2D, Orbit 3D interaktif, Simulasi Gerhana Bulan &amp; Matahari, Kamera AR, Kokpit VR, serta 6 Modul Eksperimen Sains!
           </p>
         </div>
 
-        {/* 5 Main Tabs */}
+        {/* 6 Main Tabs */}
         <div className="flex items-center gap-1.5 p-1.5 bg-slate-900 rounded-2xl border border-slate-800 self-start lg:self-auto overflow-x-auto max-w-full">
           <button
             onClick={() => setMode('3D')}
@@ -728,6 +854,18 @@ export function SDSolarMultiverseLab({ onProgressUpdate }: SDSolarLabProps) {
           </button>
 
           <button
+            onClick={() => setMode('GERHANA')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              mode === 'GERHANA'
+                ? 'bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 text-white shadow-lg shadow-rose-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+          >
+            <Moon className="w-3.5 h-3.5 text-amber-300" />
+            <span>🌑☀️ Mode Gerhana (Bulan &amp; Matahari)</span>
+          </button>
+
+          <button
             onClick={() => setMode('EKSPERIMEN')}
             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               mode === 'EKSPERIMEN'
@@ -736,7 +874,7 @@ export function SDSolarMultiverseLab({ onProgressUpdate }: SDSolarLabProps) {
             }`}
           >
             <FlaskConical className="w-3.5 h-3.5 text-amber-300" />
-            <span>🧪 5 Modul Eksperimen</span>
+            <span>🧪 6 Modul Eksperimen</span>
           </button>
 
           <button
@@ -946,18 +1084,982 @@ export function SDSolarMultiverseLab({ onProgressUpdate }: SDSolarLabProps) {
       )}
 
       {/* ============================================================== */}
-      {/* 2. MODUL EKSPERIMEN (5 EKSPERIMEN LENGKAP)                     */}
+      {/* 2. MODE GERHANA: BULAN & MATAHARI INTERAKTIF                   */}
+      {/* ============================================================== */}
+      {mode === 'GERHANA' && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Sub Navigation Bar for Gerhana */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  Fase B &amp; C SD • Geometri Bayangan &amp; Antariksa
+                </span>
+                <span className="text-xs font-mono text-amber-400">Umbra &amp; Penumbra</span>
+              </div>
+              <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 mt-1">
+                <Moon className="w-5 h-5 text-amber-400" />
+                Laboratorium Proses Gerhana Bulan &amp; Gerhana Matahari
+              </h3>
+            </div>
+
+            {/* Sub-Tabs: Simulasi, Mini Game Tantangan, Ensiklopedi */}
+            <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+              <button
+                onClick={() => setActiveEclipseTab('simulasi')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                  activeEclipseTab === 'simulasi'
+                    ? 'bg-amber-500 text-slate-950 shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🔭 Simulasi &amp; POV Bumi
+              </button>
+              <button
+                onClick={() => setActiveEclipseTab('susun_posisi')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                  activeEclipseTab === 'susun_posisi'
+                    ? 'bg-rose-500 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🧩 Tantangan Susun Posisi
+              </button>
+              <button
+                onClick={() => setActiveEclipseTab('tabel_ilmu')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                  activeEclipseTab === 'tabel_ilmu'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                📖 Ensiklopedi Umbra &amp; Penumbra
+              </button>
+            </div>
+          </div>
+
+          {/* TAB 1: SIMULASI & POV BUMI */}
+          {activeEclipseTab === 'simulasi' && (
+            <div className="space-y-6">
+              {/* Controls Toolbar */}
+              <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                {/* Switcher Gerhana Matahari vs Gerhana Bulan */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400 font-bold uppercase mr-1">Tipe Gerhana:</span>
+                  <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+                    <button
+                      onClick={() => {
+                        setEclipseType('matahari');
+                        setEclipseProgress(50);
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        eclipseType === 'matahari'
+                          ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Sun className="w-3.5 h-3.5" />
+                      <span>☀️ Gerhana Matahari</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEclipseType('bulan');
+                        setEclipseProgress(50);
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        eclipseType === 'bulan'
+                          ? 'bg-rose-600 text-white shadow-md shadow-rose-600/20'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Moon className="w-3.5 h-3.5" />
+                      <span>🌕 Gerhana Bulan</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sub-variant Pills */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400 font-bold uppercase mr-1">Varian:</span>
+                  {eclipseType === 'matahari' ? (
+                    <div className="flex items-center gap-1.5 text-xs">
+                      {[
+                        { id: 'total', label: '🌑 Total (Korona)' },
+                        { id: 'sebagian', label: '🌘 Sebagian (Sabit)' },
+                        { id: 'cincin', label: '⭕ Cincin (Ring of Fire)' },
+                      ].map((sub) => (
+                        <button
+                          key={sub.id}
+                          onClick={() => setSolarSubtype(sub.id as any)}
+                          className={`px-2.5 py-1 rounded-lg border font-semibold transition-all ${
+                            solarSubtype === sub.id
+                              ? 'bg-amber-500/20 text-amber-300 border-amber-400'
+                              : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                          }`}
+                        >
+                          {sub.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-xs">
+                      {[
+                        { id: 'total', label: '🔴 Total (Blood Moon)' },
+                        { id: 'sebagian', label: '🌗 Sebagian' },
+                        { id: 'penumbra', label: '🌕 Penumbra (Samar)' },
+                      ].map((sub) => (
+                        <button
+                          key={sub.id}
+                          onClick={() => setLunarSubtype(sub.id as any)}
+                          className={`px-2.5 py-1 rounded-lg border font-semibold transition-all ${
+                            lunarSubtype === sub.id
+                              ? 'bg-rose-500/20 text-rose-300 border-rose-400'
+                              : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                          }`}
+                        >
+                          {sub.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions: Play, Reset, Voice */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsEclipsePlaying(!isEclipsePlaying)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 ${
+                      isEclipsePlaying
+                        ? 'bg-amber-500 text-slate-950'
+                        : 'bg-brand-600 hover:bg-brand-500 text-white'
+                    }`}
+                  >
+                    {isEclipsePlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                    <span>{isEclipsePlaying ? 'Jeda' : 'Putar Animasi'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setEclipseProgress(50);
+                      setIsEclipsePlaying(false);
+                    }}
+                    className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all"
+                    title="Puncak Gerhana"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      speakEclipseFact(
+                        eclipseType,
+                        eclipseType === 'matahari' ? solarSubtype : lunarSubtype
+                      )
+                    }
+                    disabled={isPlayingAudio}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs font-bold transition-all"
+                  >
+                    <Volume2 className="w-3.5 h-3.5" />
+                    <span>{isPlayingAudio ? 'Membaca...' : '🔊 Narasi Suara'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Progress Slider Timeline */}
+              <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-400" />
+                    Garis Waktu Perjalanan Gerhana:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-tealbrand-300 border border-slate-700">
+                      {eclipseProgress < 20
+                        ? 'Fase 1: Sebelum Gerhana (Cahaya Penuh)'
+                        : eclipseProgress < 40
+                        ? 'Fase 2: Masuk Bayangan Penumbra (Awal Meredup)'
+                        : eclipseProgress <= 60
+                        ? 'Fase 3: PUNCAK GERHANA (Totalitas / Maksimum)'
+                        : eclipseProgress < 80
+                        ? 'Fase 4: Keluar dari Umbra'
+                        : 'Fase 5: Gerhana Berakhir (Terang Kembali)'}
+                    </span>
+                    <span className="font-mono text-amber-400 font-bold">{Math.round(eclipseProgress)}%</span>
+                  </div>
+                </div>
+
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value={eclipseProgress}
+                  onChange={(e) => setEclipseProgress(parseFloat(e.target.value))}
+                  className="w-full accent-amber-500 cursor-pointer h-2 bg-slate-800 rounded-lg"
+                />
+
+                <div className="flex justify-between text-[10px] text-slate-500 font-mono pt-0.5">
+                  <span>0% (Awal)</span>
+                  <span>25% (Kontak 1)</span>
+                  <span className="text-amber-400 font-bold">50% (PUNCAK MAKSIMUM)</span>
+                  <span>75% (Kontak 4)</span>
+                  <span>100% (Selesai)</span>
+                </div>
+              </div>
+
+              {/* Dual Column Layout: Space View (Left) & Earth POV (Right) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                {/* Left 7 cols: Space Alignment View & Ray Casting */}
+                <div className="lg:col-span-7 bg-slate-900/90 rounded-2xl p-5 border border-slate-800 flex flex-col justify-between space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-amber-400" />
+                      <h4 className="font-bold text-sm text-slate-200">
+                        1. Geometri Ruang Angkasa &amp; Kerucut Bayangan
+                      </h4>
+                    </div>
+                    <span className="text-[11px] font-mono text-slate-400">
+                      {eclipseType === 'matahari'
+                        ? 'MATAHARI ➔ BULAN ➔ BUMI'
+                        : 'MATAHARI ➔ BUMI ➔ BULAN'}
+                    </span>
+                  </div>
+
+                  {/* SVG Space Canvas */}
+                  <div className="relative w-full h-[320px] rounded-xl overflow-hidden bg-gradient-to-r from-slate-950 via-[#030712] to-slate-950 border border-slate-800">
+                    <svg
+                      viewBox="0 0 800 320"
+                      className="w-full h-full select-none"
+                    >
+                      <defs>
+                        {/* Sun Radial Glow */}
+                        <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stopColor="#fef08a" />
+                          <stop offset="60%" stopColor="#f59e0b" />
+                          <stop offset="100%" stopColor="#ea580c" />
+                        </radialGradient>
+
+                        {/* Umbra Gradient */}
+                        <linearGradient id="umbraGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="rgba(15, 23, 42, 0.98)" />
+                          <stop offset="100%" stopColor="rgba(2, 6, 23, 0.98)" />
+                        </linearGradient>
+
+                        {/* Penumbra Gradient */}
+                        <linearGradient id="penumbraGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="rgba(100, 116, 139, 0.45)" />
+                          <stop offset="100%" stopColor="rgba(71, 85, 105, 0.15)" />
+                        </linearGradient>
+
+                        {/* Blood Moon Radial */}
+                        <radialGradient id="bloodMoonGlow" cx="40%" cy="40%" r="60%">
+                          <stop offset="0%" stopColor="#fca5a5" />
+                          <stop offset="60%" stopColor="#ef4444" />
+                          <stop offset="100%" stopColor="#991b1b" />
+                        </radialGradient>
+                      </defs>
+
+                      {/* Stars in Space */}
+                      {[
+                        [40, 40], [120, 290], [200, 70], [270, 240], [330, 40],
+                        [450, 280], [520, 50], [600, 290], [700, 60], [760, 240],
+                        [490, 190], [220, 160], [640, 90]
+                      ].map(([sx, sy], i) => (
+                        <circle key={i} cx={sx} cy={sy} r={i % 2 === 0 ? 1.5 : 1} fill="#ffffff" opacity={0.6} />
+                      ))}
+
+                      {/* 1. MATAHARI (SUN) on the Left */}
+                      <g className="cursor-pointer">
+                        <circle cx="100" cy="160" r="58" fill="url(#sunGlow)" opacity={0.25} />
+                        <circle cx="100" cy="160" r="50" fill="url(#sunGlow)" />
+                        <text x="100" y="235" textAnchor="middle" fill="#fde047" fontSize="11" fontWeight="bold">
+                          ☀️ MATAHARI
+                        </text>
+                      </g>
+
+                      {/* 2. SOLAR ECLIPSE LOGIC */}
+                      {eclipseType === 'matahari' && (() => {
+                        const moonY = 160 + ((eclipseProgress - 50) / 50) * 75;
+                        const moonX = 370;
+                        const earthX = 660;
+                        const earthY = 160;
+
+                        // Penumbra polygon
+                        const penumbraPoints = `
+                          ${moonX},${moonY - 16}
+                          ${earthX},${160 - 55}
+                          ${earthX},${160 + 55}
+                          ${moonX},${moonY + 16}
+                        `;
+
+                        // Umbra cone triangle/polygon to Earth
+                        const umbraPoints = `
+                          ${moonX},${moonY - 14}
+                          ${earthX},${160 + ((moonY - 160) * 1.4) - 9}
+                          ${earthX},${160 + ((moonY - 160) * 1.4) + 9}
+                          ${moonX},${moonY + 14}
+                        `;
+
+                        return (
+                          <g>
+                            {/* Golden Sunlight Rays */}
+                            <line x1="100" y1="110" x2={moonX} y2={moonY - 16} stroke="#fde047" strokeWidth="1" strokeDasharray="4 4" opacity={0.6} />
+                            <line x1="100" y1="210" x2={moonX} y2={moonY + 16} stroke="#fde047" strokeWidth="1" strokeDasharray="4 4" opacity={0.6} />
+                            <line x1="100" y1="110" x2={moonX} y2={moonY + 16} stroke="#fde047" strokeWidth="1" strokeDasharray="2 4" opacity={0.3} />
+                            <line x1="100" y1="210" x2={moonX} y2={moonY - 16} stroke="#fde047" strokeWidth="1" strokeDasharray="2 4" opacity={0.3} />
+
+                            {/* Penumbra Shadow Region */}
+                            <polygon points={penumbraPoints} fill="url(#penumbraGrad)" />
+
+                            {/* Umbra Shadow Cone */}
+                            <polygon points={umbraPoints} fill="url(#umbraGrad)" />
+
+                            {/* Orbit Track of Moon */}
+                            <line x1={moonX} y1="70" x2={moonX} y2="250" stroke="#475569" strokeWidth="1.5" strokeDasharray="3 3" />
+
+                            {/* Moon (🌑) */}
+                            <circle cx={moonX} cy={moonY} r="18" fill="#1e293b" stroke="#cbd5e1" strokeWidth="1.5" />
+                            <text x={moonX} y={moonY + 4} textAnchor="middle" fill="#ffffff" fontSize="10" fontWeight="bold">🌑</text>
+                            <text x={moonX} y={moonY > 160 ? moonY + 34 : moonY - 24} textAnchor="middle" fill="#cbd5e1" fontSize="10" fontWeight="bold">
+                              BULAN ({Math.round(eclipseProgress)}%)
+                            </text>
+
+                            {/* Earth (🌍) */}
+                            <circle cx={earthX} cy={earthY} r="38" fill="#0284c7" stroke="#38bdf8" strokeWidth="2" />
+                            {/* Continents */}
+                            <circle cx={earthX - 10} cy={earthY - 10} r="14" fill="#22c55e" opacity={0.8} />
+                            <circle cx={earthX + 8} cy={earthY + 8} r="12" fill="#22c55e" opacity={0.8} />
+
+                            {/* Umbra Shadow Spot on Earth */}
+                            {Math.abs(moonY - 160) < 18 && (
+                              <circle
+                                cx={earthX - 35}
+                                cy={160 + ((moonY - 160) * 1.4)}
+                                r={solarSubtype === 'total' ? 8 : solarSubtype === 'cincin' ? 5 : 6}
+                                fill="#000000"
+                                opacity={0.95}
+                              />
+                            )}
+
+                            <text x={earthX} y={earthY + 56} textAnchor="middle" fill="#38bdf8" fontSize="11" fontWeight="bold">
+                              🌍 BUMI (INDONESIA)
+                            </text>
+
+                            {/* Umbra & Penumbra Interactive Callouts */}
+                            <g className="cursor-pointer" onClick={() => setSelectedRayZone('umbra')}>
+                              <rect x="430" y="145" width="80" height="22" rx="6" fill="#020617" stroke="#dc2626" strokeWidth="1.5" />
+                              <text x="470" y="160" textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="bold">
+                                🖤 UMBRA
+                              </text>
+                            </g>
+
+                            <g className="cursor-pointer" onClick={() => setSelectedRayZone('penumbra')}>
+                              <rect x="430" y="105" width="90" height="22" rx="6" fill="#0f172a" stroke="#64748b" strokeWidth="1.5" />
+                              <text x="475" y="120" textAnchor="middle" fill="#cbd5e1" fontSize="10" fontWeight="bold">
+                                🩶 PENUMBRA
+                              </text>
+                            </g>
+                          </g>
+                        );
+                      })()}
+
+                      {/* 3. LUNAR ECLIPSE LOGIC */}
+                      {eclipseType === 'bulan' && (() => {
+                        const earthX = 350;
+                        const earthY = 160;
+                        const moonX = 650;
+                        const moonY = 160 + ((eclipseProgress - 50) / 50) * 85;
+                        const isInsideUmbra = Math.abs(moonY - 160) < 22;
+                        const isInsidePenumbra = Math.abs(moonY - 160) < 55;
+
+                        // Earth's massive Umbra Cone
+                        const earthUmbraPoints = `
+                          ${earthX},${earthY - 36}
+                          760,${160 - 18}
+                          760,${160 + 18}
+                          ${earthX},${earthY + 36}
+                        `;
+
+                        // Earth's Penumbra Zone
+                        const earthPenumbraPoints = `
+                          ${earthX},${earthY - 38}
+                          760,${160 - 75}
+                          760,${160 + 75}
+                          ${earthX},${earthY + 38}
+                        `;
+
+                        return (
+                          <g>
+                            {/* Sunlight reaching Earth */}
+                            <line x1="100" y1="110" x2={earthX} y2={earthY - 36} stroke="#fde047" strokeWidth="1" strokeDasharray="4 4" opacity={0.6} />
+                            <line x1="100" y1="210" x2={earthX} y2={earthY + 36} stroke="#fde047" strokeWidth="1" strokeDasharray="4 4" opacity={0.6} />
+
+                            {/* Penumbra Region */}
+                            <polygon points={earthPenumbraPoints} fill="url(#penumbraGrad)" />
+
+                            {/* Earth's Umbra Shadow Cone */}
+                            <polygon points={earthUmbraPoints} fill="url(#umbraGrad)" />
+
+                            {/* Earth (🌍) in the Middle */}
+                            <circle cx={earthX} cy={earthY} r="40" fill="#0284c7" stroke="#38bdf8" strokeWidth="2" />
+                            <circle cx={earthX - 10} cy={earthY - 10} r="14" fill="#22c55e" opacity={0.8} />
+                            <circle cx={earthX + 12} cy={earthY + 12} r="12" fill="#22c55e" opacity={0.8} />
+                            {/* Night side of Earth */}
+                            <path d={`M ${earthX} ${earthY - 40} A 40 40 0 0 1 ${earthX} ${earthY + 40} Z`} fill="#020617" opacity={0.7} />
+                            <text x={earthX} y={earthY + 58} textAnchor="middle" fill="#38bdf8" fontSize="11" fontWeight="bold">
+                              🌍 BUMI (PENGHALANG)
+                            </text>
+
+                            {/* Orbit Track of Moon */}
+                            <line x1={moonX} y1="65" x2={moonX} y2="255" stroke="#475569" strokeWidth="1.5" strokeDasharray="3 3" />
+
+                            {/* Moon (🌕 / 🔴) in Earth's shadow */}
+                            <circle
+                              cx={moonX}
+                              cy={moonY}
+                              r="18"
+                              fill={
+                                isInsideUmbra
+                                  ? lunarSubtype === 'total'
+                                    ? 'url(#bloodMoonGlow)'
+                                    : '#475569'
+                                  : isInsidePenumbra
+                                  ? '#94a3b8'
+                                  : '#f8fafc'
+                              }
+                              stroke={isInsideUmbra ? '#ef4444' : '#cbd5e1'}
+                              strokeWidth={isInsideUmbra ? 2.5 : 1.5}
+                            />
+
+                            <text x={moonX} y={moonY + 4} textAnchor="middle" fill="#ffffff" fontSize="10" fontWeight="bold">
+                              {isInsideUmbra && lunarSubtype === 'total' ? '🔴' : '🌕'}
+                            </text>
+
+                            <text
+                              x={moonX}
+                              y={moonY > 160 ? moonY + 34 : moonY - 24}
+                              textAnchor="middle"
+                              fill={isInsideUmbra && lunarSubtype === 'total' ? '#f87171' : '#cbd5e1'}
+                              fontSize="10"
+                              fontWeight="bold"
+                            >
+                              {isInsideUmbra && lunarSubtype === 'total'
+                                ? 'BLOOD MOON (MERAH TEMBAGA)'
+                                : `BULAN (${Math.round(eclipseProgress)}%)`}
+                            </text>
+
+                            {/* Umbra & Penumbra Interactive Callouts */}
+                            <g className="cursor-pointer" onClick={() => setSelectedRayZone('umbra')}>
+                              <rect x="470" y="145" width="110" height="22" rx="6" fill="#020617" stroke="#dc2626" strokeWidth="1.5" />
+                              <text x="525" y="160" textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="bold">
+                                🖤 UMBRA BUMI
+                              </text>
+                            </g>
+
+                            <g className="cursor-pointer" onClick={() => setSelectedRayZone('penumbra')}>
+                              <rect x="470" y="90" width="120" height="22" rx="6" fill="#0f172a" stroke="#64748b" strokeWidth="1.5" />
+                              <text x="530" y="105" textAnchor="middle" fill="#cbd5e1" fontSize="10" fontWeight="bold">
+                                🩶 PENUMBRA BUMI
+                              </text>
+                            </g>
+                          </g>
+                        );
+                      })()}
+                    </svg>
+                  </div>
+
+                  {/* Zone Explanations Popover Card */}
+                  <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs flex items-start justify-between gap-3">
+                    <div>
+                      <span className="font-bold text-amber-300">
+                        {selectedRayZone === 'umbra'
+                          ? '🖤 Wilayah Umbra (Bayangan Inti):'
+                          : selectedRayZone === 'penumbra'
+                          ? '🩶 Wilayah Penumbra (Bayangan Samar):'
+                          : '💡 Petunjuk Observasi Geometri:'}
+                      </span>
+                      <p className="text-slate-300 mt-0.5 leading-relaxed">
+                        {selectedRayZone === 'umbra'
+                          ? 'Umbra adalah bayangan inti yang paling gelap di mana seluruh cahaya matahari terhalang 100%. Di bumi yang dilintasi umbra terjadi Gerhana Total (siang hari menjadi gelap gulita), atau bulan yang masuk umbra berubah menjadi merah tembaga (Blood Moon).'
+                          : selectedRayZone === 'penumbra'
+                          ? 'Penumbra adalah daerah bayangan kabur di sekeliling umbra di mana hanya sebagian cahaya matahari yang terhalang. Di daerah penumbra terjadi Gerhana Sebagian.'
+                          : 'Klik kotak UMBRA atau PENUMBRA pada diagram di atas untuk mempelajari sifat bayangan inti dan bayangan kabur!'}
+                      </p>
+                    </div>
+                    {selectedRayZone && (
+                      <button
+                        onClick={() => setSelectedRayZone(null)}
+                        className="px-2 py-1 rounded bg-slate-800 text-[10px] text-slate-400 hover:text-white"
+                      >
+                        Tutup
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right 5 cols: POV Observer from Earth Surface */}
+                <div className="lg:col-span-5 bg-slate-900/90 rounded-2xl p-5 border border-slate-800 flex flex-col justify-between space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-tealbrand-400" />
+                      <h4 className="font-bold text-sm text-slate-200">
+                        2. Sudut Pandang Siswa dari Bumi (POV)
+                      </h4>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-amber-400 font-bold">
+                      {eclipseType === 'matahari' ? 'Langit Siang Hari' : 'Langit Malam Hari'}
+                    </span>
+                  </div>
+
+                  {/* POV Sky Simulation Box */}
+                  {(() => {
+                    const dist50 = Math.abs(eclipseProgress - 50);
+
+                    if (eclipseType === 'matahari') {
+                      // Sky color dynamic transition
+                      let skyBg = '#38bdf8'; // Daylight bright blue
+                      if (dist50 < 6) {
+                        skyBg = '#020617'; // Pitch black during totality!
+                      } else if (dist50 < 22) {
+                        skyBg = '#0f172a'; // Deep twilight
+                      } else if (dist50 < 38) {
+                        skyBg = '#0284c7'; // Dimmed blue
+                      }
+
+                      const moonOffsetX = (eclipseProgress - 50) * 2.2;
+                      const isTotality = dist50 < 6;
+
+                      return (
+                        <div
+                          className="relative w-full h-[260px] rounded-2xl overflow-hidden border-2 border-slate-700 shadow-2xl flex items-center justify-center transition-colors duration-500"
+                          style={{ backgroundColor: skyBg }}
+                        >
+                          {/* Stars visible during daytime totality */}
+                          {isTotality && (
+                            <div className="absolute inset-0 pointer-events-none animate-in fade-in duration-700">
+                              {[
+                                [20, 20], [80, 40], [240, 30], [280, 90], [40, 180],
+                                [190, 210], [260, 220], [60, 110], [210, 80]
+                              ].map(([sx, sy], i) => (
+                                <div
+                                  key={i}
+                                  className="absolute text-amber-200 text-xs animate-ping"
+                                  style={{ left: `${sx}px`, top: `${sy}px`, animationDuration: `${2 + i}s` }}
+                                >
+                                  ✨
+                                </div>
+                              ))}
+                              <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold border border-amber-400/40">
+                                ⭐ Bintang Muncul di Siang Hari!
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Corona Glow around Sun during Totality */}
+                          {isTotality && solarSubtype === 'total' && (
+                            <div className="absolute w-44 h-44 rounded-full bg-gradient-to-r from-amber-100 via-white to-amber-200 blur-md opacity-80 animate-pulse pointer-events-none" />
+                          )}
+
+                          {/* Sun Disk */}
+                          <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 shadow-2xl flex items-center justify-center">
+                            {/* Moon Disk passing in front of Sun */}
+                            <div
+                              className="absolute rounded-full transition-transform duration-75 shadow-inner"
+                              style={{
+                                width: solarSubtype === 'cincin' ? '92px' : '112px',
+                                height: solarSubtype === 'cincin' ? '92px' : '112px',
+                                backgroundColor: isTotality && solarSubtype === 'total' ? '#000000' : '#0f172a',
+                                transform: `translate(${moonOffsetX}px, ${solarSubtype === 'sebagian' ? '24px' : '0px'})`,
+                              }}
+                            />
+                          </div>
+
+                          {/* Diamond ring sparkle */}
+                          {dist50 >= 4 && dist50 <= 7 && solarSubtype === 'total' && (
+                            <div className="absolute z-20 text-2xl animate-spin text-white" style={{ animationDuration: '4s' }}>
+                              💎
+                            </div>
+                          )}
+
+                          {/* Badge Status at Bottom */}
+                          <div className="absolute bottom-2 left-2 right-2 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 text-[11px] flex items-center justify-between">
+                            <span className="font-bold text-slate-200">
+                              {isTotality
+                                ? solarSubtype === 'total'
+                                  ? '🌑 Gerhana Matahari TOTAL (Korona Bercahaya!)'
+                                  : solarSubtype === 'cincin'
+                                  ? '⭕ Gerhana Matahari CINCIN (Ring of Fire!)'
+                                  : '🌘 Gerhana Matahari SEBAGIAN'
+                                : '☀️ Matahari Tertutup Sebagian'}
+                            </span>
+                            <span className="text-amber-400 font-mono font-bold">
+                              {isTotality ? 'PUNCAK' : `${Math.round(100 - dist50 * 2)}% Tutup`}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      // Lunar Eclipse POV
+                      const isInsideUmbra = dist50 < 18;
+
+                      return (
+                        <div className="relative w-full h-[260px] rounded-2xl overflow-hidden border-2 border-slate-700 shadow-2xl flex items-center justify-center bg-gradient-to-b from-[#020617] via-[#050816] to-[#0b0f24]">
+                          {/* Twinkling Stars */}
+                          <div className="absolute inset-0 pointer-events-none">
+                            {[
+                              [30, 30], [80, 70], [240, 40], [290, 110], [50, 190],
+                              [180, 220], [270, 230], [70, 130], [220, 90]
+                            ].map(([sx, sy], i) => (
+                              <div
+                                key={i}
+                                className="absolute text-slate-400 text-[10px]"
+                                style={{ left: `${sx}px`, top: `${sy}px` }}
+                              >
+                                ✦
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Blood Moon Aura Glow */}
+                          {isInsideUmbra && lunarSubtype === 'total' && (
+                            <div className="absolute w-40 h-40 rounded-full bg-red-600/30 blur-xl animate-pulse pointer-events-none" />
+                          )}
+
+                          {/* Moon Disk in Night Sky */}
+                          <div
+                            className="relative w-28 h-28 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300"
+                            style={{
+                              backgroundColor:
+                                isInsideUmbra
+                                  ? lunarSubtype === 'total'
+                                    ? '#b91c1c'
+                                    : '#334155'
+                                  : dist50 < 35
+                                  ? '#94a3b8'
+                                  : '#f8fafc',
+                              boxShadow:
+                                isInsideUmbra && lunarSubtype === 'total'
+                                  ? '0 0 35px rgba(239, 68, 68, 0.7)'
+                                  : '0 0 20px rgba(248, 250, 252, 0.4)',
+                            }}
+                          >
+                            {/* Moon surface details */}
+                            <span className="text-3xl opacity-80">
+                              {isInsideUmbra && lunarSubtype === 'total' ? '🔴' : '🌕'}
+                            </span>
+                          </div>
+
+                          {/* Badge Status */}
+                          <div className="absolute bottom-2 left-2 right-2 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 text-[11px] flex items-center justify-between">
+                            <span className="font-bold text-rose-300">
+                              {isInsideUmbra
+                                ? lunarSubtype === 'total'
+                                  ? '🔴 GERHANA BULAN TOTAL (BLOOD MOON)'
+                                  : '🌗 GERHANA BULAN SEBAGIAN'
+                                : '🌕 BULAN PURNAMA'}
+                            </span>
+                            <span className="text-tealbrand-400 font-mono font-bold">
+                              {isInsideUmbra ? 'FASE TOTAL' : 'Di Luar Umbra'}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
+                  })()}
+
+                  {/* Observer Fact Cards */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">
+                        {eclipseType === 'matahari' ? '🌡️ Suhu Udara' : '🌕 Fase Bulan'}
+                      </span>
+                      <p className="font-bold text-amber-300 mt-0.5">
+                        {eclipseType === 'matahari'
+                          ? Math.abs(eclipseProgress - 50) < 6
+                            ? '23°C (Dingin Mendadak!)'
+                            : '31°C (Hangat)'
+                          : 'Bulan Purnama (Full Moon)'}
+                      </p>
+                    </div>
+
+                    <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">
+                        {eclipseType === 'matahari' ? '⚠️ Aturan Keamanan' : '👁️ Keamanan Melihat'}
+                      </span>
+                      <p
+                        className={`font-bold mt-0.5 ${
+                          eclipseType === 'matahari' ? 'text-rose-400' : 'text-emerald-400'
+                        }`}
+                      >
+                        {eclipseType === 'matahari' ? 'Wajib Kacamata Khusus!' : '100% Aman Mata Telanjang'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: TANTANGAN SUSUN POSISI (MINI-GAME) */}
+          {activeEclipseTab === 'susun_posisi' && (
+            <div className="bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-800 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                <div>
+                  <h4 className="text-base font-bold text-rose-300 flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-amber-400" />
+                    Misi Antariksawan Cilik: Susun Urutan Posisi Gerhana!
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Klik benda langit di bawah ini untuk mengisi kotak posisi dari kiri ke kanan agar tercipta gerhana yang diminta.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setAlignEclipseTarget('matahari');
+                      handleClearAlignSlots();
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      alignEclipseTarget === 'matahari'
+                        ? 'bg-amber-400 text-slate-950 shadow-md'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    🎯 Misi 1: Gerhana Matahari
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAlignEclipseTarget('bulan');
+                      handleClearAlignSlots();
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      alignEclipseTarget === 'bulan'
+                        ? 'bg-rose-600 text-white shadow-md'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    🎯 Misi 2: Gerhana Bulan
+                  </button>
+                </div>
+              </div>
+
+              {/* Mission Goal Banner */}
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-center">
+                <span className="text-xs text-slate-400">Target Tantanganmu Sekarang:</span>
+                <h3 className="text-base sm:text-lg font-black text-amber-400 mt-0.5">
+                  {alignEclipseTarget === 'matahari'
+                    ? '☀️ Susun Benda Langit untuk Menciptakan GERHANA MATAHARI'
+                    : '🌕 Susun Benda Langit untuk Menciptakan GERHANA BULAN'}
+                </h3>
+              </div>
+
+              {/* 3 Slots */}
+              <div className="grid grid-cols-3 gap-3 max-w-xl mx-auto py-2">
+                {[
+                  { key: 'slot1', label: '1. Sumber Cahaya' },
+                  { key: 'slot2', label: '2. Benda di Tengah' },
+                  { key: 'slot3', label: '3. Penerima Bayangan' },
+                ].map((s) => {
+                  const val = alignSlots[s.key as keyof typeof alignSlots];
+                  const itemLabel =
+                    val === 'matahari'
+                      ? '☀️ Matahari'
+                      : val === 'bumi'
+                      ? '🌍 Bumi'
+                      : val === 'bulan'
+                      ? '🌑 Bulan'
+                      : 'Kosong';
+
+                  return (
+                    <div
+                      key={s.key}
+                      className={`h-28 rounded-2xl border-2 flex flex-col items-center justify-center p-2 text-center transition-all ${
+                        val
+                          ? 'bg-slate-950 border-amber-400 shadow-lg shadow-amber-500/10'
+                          : 'bg-slate-950/40 border-dashed border-slate-700 text-slate-600'
+                      }`}
+                    >
+                      <span className="text-[10px] text-slate-400 font-mono block mb-1">{s.label}</span>
+                      <span className="text-2xl">{val === 'matahari' ? '☀️' : val === 'bumi' ? '🌍' : val === 'bulan' ? '🌑' : '❓'}</span>
+                      <span className={`text-xs font-bold mt-1 ${val ? 'text-amber-300' : 'text-slate-600'}`}>
+                        {itemLabel}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Selectable celestial bodies */}
+              <div className="text-center space-y-2">
+                <p className="text-xs text-slate-400">Pilih Benda Langit untuk Dimasukkan ke Kotak:</p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  {[
+                    { id: 'matahari', name: 'Matahari', emoji: '☀️', color: 'from-amber-400 to-orange-500 text-slate-950' },
+                    { id: 'bumi', name: 'Bumi', emoji: '🌍', color: 'from-blue-600 to-teal-500 text-white' },
+                    { id: 'bulan', name: 'Bulan', emoji: '🌑', color: 'from-slate-700 to-slate-900 text-white' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handlePlaceAlignItem(item.id)}
+                      className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 bg-gradient-to-r ${item.color} shadow-md transition-all active:scale-95`}
+                    >
+                      <span className="text-base">{item.emoji}</span>
+                      <span>{item.name}</span>
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={handleClearAlignSlots}
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold flex items-center gap-1.5"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Reset Slot</span>
+                  </button>
+
+                  <button
+                    onClick={handleCheckAlignment}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg transition-all active:scale-95 flex items-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Uji Susunan!</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Feedback alert */}
+              {alignFeedback && (
+                <div
+                  className={`p-4 rounded-2xl text-xs font-bold flex items-start gap-3 animate-in fade-in max-w-xl mx-auto ${
+                    alignFeedback.isSuccess
+                      ? 'bg-emerald-950/80 border border-emerald-500 text-emerald-200'
+                      : 'bg-rose-950/80 border border-rose-500 text-rose-200'
+                  }`}
+                >
+                  <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">{alignFeedback.message}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: ENSIKLOPEDI UMBRA & PENUMBRA */}
+          {activeEclipseTab === 'tabel_ilmu' && (
+            <div className="space-y-6">
+              {/* Concept comparison grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                    <Sun className="w-4 h-4" />
+                    <span>☀️ Gerhana Matahari (Solar Eclipse)</span>
+                  </div>
+                  <ul className="text-xs text-slate-300 space-y-2 leading-relaxed">
+                    <li>• <strong>Susunan Posisi:</strong> Matahari ➔ <strong>Bulan</strong> ➔ Bumi.</li>
+                    <li>• <strong>Waktu Terjadi:</strong> Selalu pada <strong>Siang Hari</strong> saat fase Bulan Baru (Bulan Mati).</li>
+                    <li>• <strong>Penyebab:</strong> Bulan berada tepat di antara Matahari dan Bumi, menutupi pancaran sinar matahari.</li>
+                    <li>• <strong>Durasi Totalitas:</strong> Sangat singkat, hanya sekitar 2 sampai 7 menit di satu titik lokasi bumi.</li>
+                    <li>• <strong>Keamanan:</strong> ⚠️ <em>Wajib menggunakan kacamata filter matahari khusus ISO 12312-2! Jangan menatap langsung dengan mata telanjang.</em></li>
+                  </ul>
+                </div>
+
+                <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3">
+                  <div className="flex items-center gap-2 text-rose-400 font-bold text-sm">
+                    <Moon className="w-4 h-4" />
+                    <span>🌕 Gerhana Bulan (Lunar Eclipse)</span>
+                  </div>
+                  <ul className="text-xs text-slate-300 space-y-2 leading-relaxed">
+                    <li>• <strong>Susunan Posisi:</strong> Matahari ➔ <strong>Bumi</strong> ➔ Bulan.</li>
+                    <li>• <strong>Waktu Terjadi:</strong> Selalu pada <strong>Malam Hari</strong> saat fase Bulan Purnama.</li>
+                    <li>• <strong>Penyebab:</strong> Bumi berada di antara Matahari dan Bulan, bayangan raksasa Bumi menutupi permukaan Bulan.</li>
+                    <li>• <strong>Fenomena Blood Moon:</strong> Bulan tampak merah darah karena atmosfer Bumi membiaskan cahaya merah matahari (hamburan Rayleigh).</li>
+                    <li>• <strong>Keamanan:</strong> ✅ <em>100% AMAN! Boleh dilihat langsung dengan mata telanjang tanpa alat pelindung.</em></li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Table Comparison */}
+              <div className="bg-slate-900 rounded-2xl p-5 border border-slate-800 space-y-3 overflow-x-auto">
+                <h4 className="font-bold text-sm text-slate-200">
+                  Tabel Perbandingan Rangkuman IPAS SD:
+                </h4>
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400">
+                      <th className="py-2.5 px-3">Aspek Pembeda</th>
+                      <th className="py-2.5 px-3 text-amber-400 font-bold">☀️ Gerhana Matahari</th>
+                      <th className="py-2.5 px-3 text-rose-400 font-bold">🌕 Gerhana Bulan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800 text-slate-300">
+                    <tr>
+                      <td className="py-2.5 px-3 font-semibold text-slate-200">Benda di Tengah</td>
+                      <td className="py-2.5 px-3">Bulan (menghalangi sinar)</td>
+                      <td className="py-2.5 px-3">Bumi (menghalangi sinar)</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3 font-semibold text-slate-200">Waktu Kejadian</td>
+                      <td className="py-2.5 px-3">Siang hari</td>
+                      <td className="py-2.5 px-3">Malam hari</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3 font-semibold text-slate-200">Fase Bulan</td>
+                      <td className="py-2.5 px-3">Bulan Baru / Bulan Mati</td>
+                      <td className="py-2.5 px-3">Bulan Purnama (Full Moon)</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3 font-semibold text-slate-200">Jenis Bayangan</td>
+                      <td className="py-2.5 px-3">Bayangan Bulan jatuh ke Bumi</td>
+                      <td className="py-2.5 px-3">Bayangan Bumi jatuh ke Bulan</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3 font-semibold text-slate-200">Pemandangan Khas</td>
+                      <td className="py-2.5 px-3">Langit gelap, korona putih bersinar</td>
+                      <td className="py-2.5 px-3">Bulan merah tembaga (Blood Moon)</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3 font-semibold text-slate-200">Alat Pengaman</td>
+                      <td className="py-2.5 px-3 text-rose-400 font-bold">Wajib kacamata gerhana filter ISO</td>
+                      <td className="py-2.5 px-3 text-emerald-400 font-bold">Aman tanpa alat pengaman</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* FAQ Accordion cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1.5">
+                  <h5 className="font-bold text-amber-300">🤔 Mengapa tidak terjadi gerhana setiap bulan?</h5>
+                  <p className="text-slate-300 leading-relaxed">
+                    Karena bidang orbit Bulan mengelilingi Bumi memiliki kemiringan sekitar <strong>5 derajat</strong> terhadap bidang orbit Bumi mengelilingi Matahari. Akibat kemiringan ini, pada kebanyakan bulan purnama atau bulan baru, posisi bayangan Bulan meleset sedikit di atas atau di bawah Bumi!
+                  </p>
+                </div>
+
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1.5">
+                  <h5 className="font-bold text-rose-300">🔴 Mengapa Bulan tampak merah saat Gerhana Total?</h5>
+                  <p className="text-slate-300 leading-relaxed">
+                    Fenomena ini disebut <em>Hamburan Rayleigh</em>. Atmosfer Bumi menyaring dan menghamburkan warna biru bergelombang pendek, tetapi membiaskan berkas cahaya merah matahari bergelombang panjang ke permukaan Bulan. Sama seperti pemandangan langit senja di Bumi!
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* 3. MODUL EKSPERIMEN (6 EKSPERIMEN LENGKAP)                     */}
       {/* ============================================================== */}
       {mode === 'EKSPERIMEN' && (
         <div className="space-y-6 animate-in fade-in duration-300">
-          {/* Sub-Tabs for 5 Experiments */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pb-2 border-b border-slate-800">
+          {/* Sub-Tabs for 6 Experiments */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pb-2 border-b border-slate-800">
             {[
               { id: 1, label: 'Eksperimen 1', title: 'Poros & Rotasi', icon: RotateCcw },
               { id: 2, label: 'Eksperimen 2', title: 'Revolusi & Orbit', icon: RefreshCw },
               { id: 3, label: 'Eksperimen 3', title: 'Skala Ukuran', icon: Gauge },
               { id: 4, label: 'Eksperimen 4', title: 'Siang & Malam', icon: Sun },
               { id: 5, label: 'Eksperimen 5', title: 'Waktu & Jarak', icon: Rocket },
+              { id: 6, label: 'Eksperimen 6', title: 'Gerhana Bulan & Matahari', icon: Moon },
             ].map((exp) => {
               const Icon = exp.icon;
               const isActive = activeExp === exp.id;
@@ -1638,14 +2740,174 @@ export function SDSolarMultiverseLab({ onProgressUpdate }: SDSolarLabProps) {
               })()}
             </div>
           )}
+
+          {/* ------------------------------------------------------------ */}
+          {/* EKSPERIMEN 6: GERHANA BULAN & MATAHARI                        */}
+          {/* ------------------------------------------------------------ */}
+          {activeExp === 6 && (
+            <div className="bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-800 space-y-6 animate-in fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                <div>
+                  <h3 className="text-lg font-bold text-amber-300 flex items-center gap-2">
+                    <Moon className="w-5 h-5 text-amber-400" />
+                    Eksperimen 6: Menyelidiki Proses Gerhana Bulan dan Gerhana Matahari
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Pelajari bagaimana kesejajaran garis lurus Matahari, Bumi, dan Bulan membentuk bayangan Umbra dan Penumbra.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    confetti({ particleCount: 70, spread: 60 });
+                    if (onProgressUpdate) onProgressUpdate();
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 self-start sm:self-auto shadow-md"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Tandai Selesai</span>
+                </button>
+              </div>
+
+              {/* Quick Experiment Workspace */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                {/* Panel 1: Konsep & Uji Coba Cepat */}
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-200">1. Pilih Fenomena yang Ingin Diselidiki:</span>
+                    <span className="text-[10px] text-amber-400 font-mono">IPAS SD</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => {
+                        setEclipseType('matahari');
+                        setEclipseProgress(50);
+                      }}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        eclipseType === 'matahari'
+                          ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold shadow-md'
+                          : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
+                      }`}
+                    >
+                      <p className="text-sm">☀️ Gerhana Matahari</p>
+                      <span className="text-[10px] opacity-80 font-normal">Matahari - Bulan - Bumi</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setEclipseType('bulan');
+                        setEclipseProgress(50);
+                      }}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        eclipseType === 'bulan'
+                          ? 'bg-rose-600 text-white border-rose-500 font-bold shadow-md'
+                          : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
+                      }`}
+                    >
+                      <p className="text-sm">🌕 Gerhana Bulan</p>
+                      <span className="text-[10px] opacity-80 font-normal">Matahari - Bumi - Bulan</span>
+                    </button>
+                  </div>
+
+                  {/* Slider Gerakan Bulan */}
+                  <div className="space-y-1.5 pt-2">
+                    <div className="flex justify-between text-[11px] text-slate-300 font-semibold">
+                      <span>Geser Posisi Orbit Bulan:</span>
+                      <span className="text-amber-400 font-mono">{Math.round(eclipseProgress)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={eclipseProgress}
+                      onChange={(e) => setEclipseProgress(parseFloat(e.target.value))}
+                      className="w-full accent-amber-500 cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[9px] text-slate-500">
+                      <span>Sebelum Gerhana</span>
+                      <span className="text-amber-400 font-bold">Puncak (Totalitas)</span>
+                      <span>Gerhana Selesai</span>
+                    </div>
+                  </div>
+
+                  {/* Shortcut to full Gerhana Mode */}
+                  <div className="pt-2">
+                    <button
+                      onClick={() => setMode('GERHANA')}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md hover:opacity-95 transition-all"
+                    >
+                      <Moon className="w-3.5 h-3.5" />
+                      <span>Buka Simulasi Lengkap &amp; Sudut Pandang Langit Bumi ➔</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Panel 2: Lembar Verifikasi Penyelidikan Sains */}
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                  <h4 className="font-bold text-slate-200">2. Hasil Penyelidikan &amp; Kesimpulan IPAS:</h4>
+
+                  <div className="space-y-2 text-xs">
+                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-start gap-2">
+                      <span className="text-amber-400 font-bold mt-0.5">✓</span>
+                      <div>
+                        <strong className="text-slate-200">Gerhana Matahari:</strong> Terjadi pada <strong>siang hari</strong> ketika Bulan berada di antara Matahari dan Bumi (fase Bulan Baru).
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-start gap-2">
+                      <span className="text-rose-400 font-bold mt-0.5">✓</span>
+                      <div>
+                        <strong className="text-slate-200">Gerhana Bulan:</strong> Terjadi pada <strong>malam hari</strong> ketika Bumi berada di antara Matahari dan Bulan (fase Bulan Purnama), menghasilkan fenomena <em>Blood Moon</em>.
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-start gap-2">
+                      <span className="text-indigo-400 font-bold mt-0.5">✓</span>
+                      <div>
+                        <strong className="text-slate-200">Umbra vs Penumbra:</strong> <em>Umbra</em> adalah bayangan inti gelap total, sedangkan <em>Penumbra</em> adalah bayangan kabur sebagian.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800/80 text-[11px] text-amber-200 leading-relaxed">
+                    💡 <strong>Tips Keselamatan:</strong> Jangan pernah melihat Gerhana Matahari langsung dengan mata telanjang! Selalu gunakan kacamata gerhana berfilter standar ISO 12312-2.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* ============================================================== */}
-      {/* 3. MODE 2D: EDUKASI INTERAKTIF & MINI GAME                     */}
+      {/* 4. MODE 2D: EDUKASI INTERAKTIF & MINI GAME                     */}
       {/* ============================================================== */}
       {mode === '2D' && (
         <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Banner Gerhana Promo */}
+          <div className="bg-gradient-to-r from-amber-500/20 via-rose-500/20 to-indigo-600/20 p-4 rounded-2xl border border-rose-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-xl shrink-0">
+                🌓
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-100">
+                  Materi IPAS: Proses Terjadinya Gerhana Bulan &amp; Gerhana Matahari!
+                </h4>
+                <p className="text-xs text-slate-300">
+                  Ketahui mengapa terjadi gerhana, perbedaan Umbra &amp; Penumbra, serta fenomena spektakuler Blood Moon dan Korona Matahari.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setMode('GERHANA')}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-rose-500 text-slate-950 font-bold text-xs whitespace-nowrap shadow-md hover:opacity-95 transition-all shrink-0"
+            >
+              Buka Simulasi Gerhana ➔
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             <div className="lg:col-span-7 bg-slate-900/90 rounded-2xl p-5 border border-slate-800 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
